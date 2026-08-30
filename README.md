@@ -4,7 +4,7 @@
 
 **Integrantes:**
 - Santiago Raúl Salinas
-- Wacho Sanabria
+- Ezequiel Sanabria
 
 **Tutor/a:** _(a definir)_
 
