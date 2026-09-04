@@ -5,8 +5,9 @@
 **Integrantes:**
 - Santiago Raúl Salinas
 - Ezequiel Sanabria
+- Joaquín Del Valle Lietti
 
-**Tutor/a:** Sebastián Bruselario
+**Tutor/a:** Gerardo Adrian Herrera
 
 ---
 
