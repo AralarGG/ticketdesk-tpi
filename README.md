@@ -13,7 +13,7 @@
 
 ## Problema
 
-Las empresas que brindan soporte a clientes —equipos de atención al usuario en productos de software, videojuegos o plataformas online, suelen manejar los reclamos y consultas de forma desordenada: por planillas sueltas, chats internos o correos electrónicos sin trazabilidad. Esto genera varios problemas concretos:
+Las empresas que brindan soporte a clientes, equipos de atención al usuario en productos de software, videojuegos o plataformas online, suelen manejar los reclamos y consultas de forma desordenada: por planillas sueltas, chats internos o correos electrónicos sin trazabilidad. Esto genera varios problemas concretos:
 
 - **Solicitudes que se pierden** porque no quedan registradas en un único lugar
 - **Duplicación de esfuerzos** cuando dos agentes distintos atienden el mismo reclamo sin saberlo
