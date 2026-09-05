@@ -21,7 +21,7 @@ Las empresas que brindan soporte a clientes, equipos de atención al usuario en 
 - **Imposibilidad de priorizar** correctamente entre consultas urgentes y consultas de baja relevancia
 - **Ausencia de historial**, lo que dificulta entender el contexto de un reclamo si cambia el agente asignado
 
-TicketDesk busca resolver esto centralizando todo el ciclo de vida de un ticket de soporte, desde que el usuario lo crea hasta que se resuelve; en un único sistema accesible tanto para usuarios como para agentes, con estados claros y trazabilidad completa.
+TicketDesk busca resolver esto centralizando todo el ciclo de vida de un ticket de soporte, desde que el usuario lo crea hasta que se resuelve, en un único sistema accesible tanto para usuarios como para agentes, con estados claros y trazabilidad completa.
 
 ## Objetivos del Proyecto
 
