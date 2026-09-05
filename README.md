@@ -1,6 +1,6 @@
-# TicketDesk — Sistema de Gestión de Tickets de Soporte
+# TicketDesk - Sistema de Gestión de Tickets de Soporte
 
-## Trabajo Final Integrador — UTN TUPaD
+## Trabajo Final Integrador - UTN TUPaD
 
 **Integrantes:**
 - Santiago Raúl Salinas
@@ -13,7 +13,7 @@
 
 ## Problema
 
-Las empresas que brindan soporte a clientes —equipos de atención al usuario en productos de software, videojuegos o plataformas online— suelen manejar los reclamos y consultas de forma desordenada: por planillas sueltas, chats internos o correos electrónicos sin trazabilidad. Esto genera varios problemas concretos:
+Las empresas que brindan soporte a clientes —equipos de atención al usuario en productos de software, videojuegos o plataformas online, suelen manejar los reclamos y consultas de forma desordenada: por planillas sueltas, chats internos o correos electrónicos sin trazabilidad. Esto genera varios problemas concretos:
 
 - **Solicitudes que se pierden** porque no quedan registradas en un único lugar
 - **Duplicación de esfuerzos** cuando dos agentes distintos atienden el mismo reclamo sin saberlo
@@ -21,7 +21,7 @@ Las empresas que brindan soporte a clientes —equipos de atención al usuario e
 - **Imposibilidad de priorizar** correctamente entre consultas urgentes y consultas de baja relevancia
 - **Ausencia de historial**, lo que dificulta entender el contexto de un reclamo si cambia el agente asignado
 
-TicketDesk busca resolver esto centralizando todo el ciclo de vida de un ticket de soporte —desde que el usuario lo crea hasta que se resuelve— en un único sistema accesible tanto para usuarios como para agentes, con estados claros y trazabilidad completa.
+TicketDesk busca resolver esto centralizando todo el ciclo de vida de un ticket de soporte, desde que el usuario lo crea hasta que se resuelve— en un único sistema accesible tanto para usuarios como para agentes, con estados claros y trazabilidad completa.
 
 ## Objetivos del Proyecto
 
@@ -59,10 +59,10 @@ Estas exclusiones no se descartan a futuro, pero quedan fuera del MVP para poder
 
 ## Stack Tecnológico
 
-- **Backend:** Java 21 + Spring Boot + JPA — se eligió por ser el stack con el que el equipo ya tiene experiencia previa (TPIs de Programación 3 y Programación IV), lo que reduce la curva de aprendizaje y permite enfocar el tiempo en el diseño del producto
-- **Frontend:** React + TypeScript — mismo criterio: stack ya trabajado en cursadas anteriores
-- **Base de datos:** PostgreSQL — modelo relacional adecuado dado que las entidades (tickets, usuarios, categorías, comentarios) tienen relaciones bien definidas y consultas que se benefician de integridad referencial
-- **Despliegue:** Backend en Render/Railway, Frontend en Vercel/Netlify — servicios gratuitos con despliegue continuo desde GitHub, cumpliendo el requisito de tener al menos un componente corriendo en la nube
+- **Backend:** Java 21 + Spring Boot + JPA - se eligió por ser el stack con el que el equipo ya tiene experiencia previa (TPIs de Programación 3 y Programación IV), lo que reduce la curva de aprendizaje y permite enfocar el tiempo en el diseño del producto
+- **Frontend:** React + TypeScript - mismo criterio: stack ya trabajado en cursadas anteriores
+- **Base de datos:** PostgreSQL - modelo relacional adecuado dado que las entidades (tickets, usuarios, categorías, comentarios) tienen relaciones bien definidas y consultas que se benefician de integridad referencial
+- **Despliegue:** Backend en Render/Railway, Frontend en Vercel/Netlify - servicios gratuitos con despliegue continuo desde GitHub, cumpliendo el requisito de tener al menos un componente corriendo en la nube
 
 ## Diseño Técnico Previo al Desarrollo
 
@@ -73,8 +73,8 @@ Estructura de tablas en PostgreSQL: `usuarios`, `tickets`, `comentarios`, `categ
 
 **2. Arquitectura de seguridad y roles (JWT)**
 La API se protege con Spring Security usando autenticación stateless mediante JWT (JSON Web Tokens): el frontend en React envía las credenciales de login, recibe un token y lo adjunta en el header de cada request posterior. Se definen dos roles de entrada:
-- `ROLE_USER` — accede solo a sus propios tickets
-- `ROLE_AGENT` — accede a todos los tickets y puede modificarlos
+- `ROLE_USER` - accede solo a sus propios tickets
+- `ROLE_AGENT` - accede a todos los tickets y puede modificarlos
 
 **3. Especificación de endpoints y contratos de la API REST**
 Se define de antemano el diseño de las rutas, los verbos HTTP y la forma exacta del JSON (DTOs) que viaja entre frontend y backend. Esto permite que el equipo de frontend pueda maquetar y mockear datos sin depender de que el backend tenga la lógica terminada, y que el backend sepa con precisión qué datos recibir y devolver en cada endpoint.
@@ -91,7 +91,7 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
 
 ## Estado del Proyecto
 
-🟡 En desarrollo — Entrega 1: Propuesta y Repositorio
+🟡 En desarrollo - Entrega 1: Propuesta y Repositorio
 
 ## Roadmap
 
