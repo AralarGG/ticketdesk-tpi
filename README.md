@@ -64,6 +64,21 @@ Estas exclusiones no se descartan a futuro, pero quedan fuera del MVP para poder
 - **Base de datos:** PostgreSQL — modelo relacional adecuado dado que las entidades (tickets, usuarios, categorías, comentarios) tienen relaciones bien definidas y consultas que se benefician de integridad referencial
 - **Despliegue:** Backend en Render/Railway, Frontend en Vercel/Netlify — servicios gratuitos con despliegue continuo desde GitHub, cumpliendo el requisito de tener al menos un componente corriendo en la nube
 
+## Diseño Técnico Previo al Desarrollo
+
+Antes de escribir código, el equipo definió tres aspectos clave de diseño:
+
+**1. Modelo de datos y relaciones (DER)**
+Estructura de tablas en PostgreSQL: `usuarios`, `tickets`, `comentarios`, `categorías`, con sus claves foráneas y tipos de datos correspondientes. Se suma una tabla `ticket_history` para registrar cada cambio de estado de un ticket: quién lo cambió, cuándo, y de qué estado a cuál pasó (esto sostiene el requisito de trazabilidad completa mencionado en el problema).
+
+**2. Arquitectura de seguridad y roles (JWT)**
+La API se protege con Spring Security usando autenticación stateless mediante JWT (JSON Web Tokens): el frontend en React envía las credenciales de login, recibe un token y lo adjunta en el header de cada request posterior. Se definen dos roles de entrada:
+- `ROLE_USER` — accede solo a sus propios tickets
+- `ROLE_AGENT` — accede a todos los tickets y puede modificarlos
+
+**3. Especificación de endpoints y contratos de la API REST**
+Se define de antemano el diseño de las rutas, los verbos HTTP y la forma exacta del JSON (DTOs) que viaja entre frontend y backend. Esto permite que el equipo de frontend pueda maquetar y mockear datos sin depender de que el backend tenga la lógica terminada, y que el backend sepa con precisión qué datos recibir y devolver en cada endpoint.
+
 ## Estructura del Repositorio
 
 ```
@@ -82,6 +97,9 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
 
 - [x] Conformación del equipo y elección de tutor/a
 - [ ] Definición de arquitectura y modelo de datos (entidades y relaciones)
+  - [ ] Diseño del modelo de datos y relaciones (DER)
+  - [ ] Definición de arquitectura de seguridad y roles (JWT)
+  - [ ] Especificación de endpoints y contratos de la API REST
 - [ ] Desarrollo del backend (API REST)
 - [ ] Desarrollo del frontend
 - [ ] Despliegue en la nube
