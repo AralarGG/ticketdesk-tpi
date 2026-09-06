@@ -93,6 +93,25 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
 
 🟡 En desarrollo - Entrega 1: Propuesta y Repositorio
 
+## 🏗️ Justificación Técnica de Arquitectura e Invariantes
+
+Para cumplir con las exigencias de un entorno productivo empresarial, el diseño del modelo de datos e infraestructura responde a las siguientes decisiones técnicas:
+
+### 1. Manejo Flexibilizado con JSON / JSONB
+Para la gestión de parámetros por cliente (ej. `configuracion_empresa.modulos_habilitados`), se adoptó la flexibilidad de estructuras **JSON / JSONB**:
+* **Evolución sin Migraciones Disruptivas:** Permite habilitar o deshabilitar módulos operativos por empresa dinámicamente sin alterar el esquema relacional (`ALTER TABLE`) ni generar tiempos de parada (*downtime*).
+* **Eficiencia Operativa:** Proporciona indexación eficiente en PostgreSQL manteniendo la velocidad de consulta propia de columnas relacionales tradicionales.
+
+### 2. Canales de Entrada por Voz y Auditoría de IA
+El canal de entrada por voz (`canal_origen = 'voz'`) combina usabilidad con auditoría técnica:
+* **Inmutabilidad y Auditoría:** Se almacena tanto el archivo de audio original (`audio_url`) como la `transcripcion_original` antes de cualquier procesamiento de palabras clave o asignación automática.
+* **Control de Calidad:** Permite verificar la fidelidad de la categorización realizada por el sistema de reconocimiento ante eventuales discrepancias.
+
+### 3. Reglas de Negocio Estrictas y Preservación de Historial
+* **Persistencia Cero-Borrado (Soft Delete):** Los usuarios y agentes nunca se eliminan físicamente de la base de datos (`activo = BOOLEAN`). Esto resguarda la integridad de la trazabilidad histórica de los reclamos.
+* **Reasignación Obligatoria:** Un agente con tickets abiertos no puede pasar a estado inactivo sin reasignar sus casos pendientes a un agente activo responsable.
+* **Trazabilidad de Adjuntos:** La subida de adjuntos/imágenes está restringida exclusivamente al usuario final (`ROLE_USER`) para evitar ambigüedades interpretativas en las respuestas de los agentes, manteniendo la resolución técnica estrictamente registrada como texto auditable.
+
 ## Roadmap
 
 - [x] Conformación del equipo y elección de tutor/a
