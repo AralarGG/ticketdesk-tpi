@@ -30,6 +30,14 @@ TicketDesk busca resolver esto centralizando todo el ciclo de vida de un ticket 
 - Reducir el tiempo de respuesta al usuario mediante un flujo de estados claro
 - Dejar registro histórico de cada ticket para facilitar auditoría y traspaso entre agentes
 
+## Propuesta de Valor y Enfoque Comercial
+
+Para las organizaciones modernas, la calidad del servicio de soporte define la retención del cliente. TicketDesk transforma la gestión de incidencias operativas mediante:
+
+* **Arquitectura Multi-tenant Adaptable:** Un único ecosistema multi-empresa donde cada cliente opera con sus parámetros y módulos independientes sin comprometer la seguridad ni el aislamiento de datos.
+* **Omnicanalidad Inteligente (Creación de Tickets por Voz):** Integración de módulos de entrada por voz para eliminar barreras de fricción en los usuarios finales, permitiendo la apertura de tickets de manera ágil e intuitiva.
+* **Trazabilidad e Audibilidad Total:** Garantía de control operativo donde no existe pérdida de información ni modificaciones inconsistentes, protegiendo el historial del cliente y los registros de servicio.
+
 ## Alcance del MVP
 
 **Roles de usuario:**
@@ -89,10 +97,6 @@ Se define de antemano el diseño de las rutas, los verbos HTTP y la forma exacta
 
 Todo el desarrollo se centraliza en este único repositorio, según lo requerido por la cátedra.
 
-## Estado del Proyecto
-
-🟡 En desarrollo - Entrega 1: Propuesta y Repositorio
-
 ## Justificación Técnica de Arquitectura e Invariantes
 
 Para cumplir con las exigencias de un entorno productivo empresarial, el diseño del modelo de datos e infraestructura responde a las siguientes decisiones técnicas:
@@ -111,6 +115,10 @@ El canal de entrada por voz (`canal_origen = 'voz'`) combina usabilidad con audi
 * **Persistencia Cero-Borrado (Soft Delete):** Los usuarios y agentes nunca se eliminan físicamente de la base de datos (`activo = BOOLEAN`). Esto resguarda la integridad de la trazabilidad histórica de los reclamos.
 * **Reasignación Obligatoria:** Un agente con tickets abiertos no puede pasar a estado inactivo sin reasignar sus casos pendientes a un agente activo responsable.
 * **Trazabilidad de Adjuntos:** La subida de adjuntos/imágenes está restringida exclusivamente al usuario final (`ROLE_USER`) para evitar ambigüedades interpretativas en las respuestas de los agentes, manteniendo la resolución técnica estrictamente registrada como texto auditable.
+
+## Estado del Proyecto
+
+🟡 En desarrollo - Entrega 1: Propuesta y Repositorio
 
 ## Roadmap
 
