@@ -132,3 +132,19 @@ El canal de entrada por voz (`canal_origen = 'voz'`) combina usabilidad con audi
 - [ ] Despliegue en la nube
 - [ ] Informe final y video explicativo
 - [ ] Defensa oral
+
+## Roadmap de Evolución del Producto y Justificación
+
+El desarrollo de TicketDesk se estructuró en fases incrementales para asegurar un producto funcional desde las primeras etapas, priorizando la estabilidad del núcleo relacional antes de incorporar automatizaciones avanzadas.
+
+* **Fase 1: Núcleo Relacional y Multi-tenant (MVP Base)**  
+  * **Enfoque:** Configuración de la estructura de datos principal (`empresas`, `usuarios`, `tickets`, `comentarios`).
+  * **Justificación:** Es imprescindible consolidar el aislamiento de datos y el flujo relacional básico antes de permitir integraciones externas o canales alternativos.
+
+* **Fase 2: Flexibilización y Canales de Entrada (Fase Actual)**  
+  * **Enfoque:** Implementación de `configuracion_empresa` mediante JSON/JSONB y módulo de creación de tickets por voz.
+  * **Justificación:** Se introduce flexibilidad en la configuración de módulos por cliente sin alterar el esquema base, y se suma el canal de voz garantizando la audibilidad de la transcripción original.
+
+* **Fase 3: Métricas Avanzadas, SLAs y Automatización (Próximos Pasos)**  
+  * **Enfoque:** Gestión de tiempos de respuesta (SLAs), reportes comparativos entre empresas e integración de modelos de IA para categorización automática.
+  * **Justificación:** Una vez garantizada la integridad operativa y la entrada omnicanal, el sistema evoluciona hacia la optimización mediante análisis de datos y automatización avanzada.
