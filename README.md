@@ -93,7 +93,7 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
 
 🟡 En desarrollo - Entrega 1: Propuesta y Repositorio
 
-## 🏗️ Justificación Técnica de Arquitectura e Invariantes
+## Justificación Técnica de Arquitectura e Invariantes
 
 Para cumplir con las exigencias de un entorno productivo empresarial, el diseño del modelo de datos e infraestructura responde a las siguientes decisiones técnicas:
 
