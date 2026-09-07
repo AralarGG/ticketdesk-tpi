@@ -30,6 +30,14 @@ TicketDesk busca resolver esto centralizando todo el ciclo de vida de un ticket 
 - Reducir el tiempo de respuesta al usuario mediante un flujo de estados claro
 - Dejar registro histórico de cada ticket para facilitar auditoría y traspaso entre agentes
 
+## Propuesta de Valor y Enfoque Comercial
+
+Para las organizaciones modernas, la calidad del servicio de soporte define la retención del cliente. TicketDesk transforma la gestión de incidencias operativas mediante:
+
+* **Arquitectura Multi-tenant Adaptable:** Un único ecosistema multi-empresa donde cada cliente opera con sus parámetros y módulos independientes sin comprometer la seguridad ni el aislamiento de datos.
+* **Omnicanalidad Inteligente (Creación de Tickets por Voz):** Integración de módulos de entrada por voz para eliminar barreras de fricción en los usuarios finales, permitiendo la apertura de tickets de manera ágil e intuitiva.
+* **Trazabilidad e Audibilidad Total:** Garantía de control operativo donde no existe pérdida de información ni modificaciones inconsistentes, protegiendo el historial del cliente y los registros de servicio.
+
 ## Alcance del MVP
 
 **Roles de usuario:**
@@ -89,6 +97,25 @@ Se define de antemano el diseño de las rutas, los verbos HTTP y la forma exacta
 
 Todo el desarrollo se centraliza en este único repositorio, según lo requerido por la cátedra.
 
+## Justificación Técnica de Arquitectura e Invariantes
+
+Para cumplir con las exigencias de un entorno productivo empresarial, el diseño del modelo de datos e infraestructura responde a las siguientes decisiones técnicas:
+
+### 1. Manejo Flexibilizado con JSON / JSONB
+Para la gestión de parámetros por cliente (ej. `configuracion_empresa.modulos_habilitados`), se adoptó la flexibilidad de estructuras **JSON / JSONB**:
+* **Evolución sin Migraciones Disruptivas:** Permite habilitar o deshabilitar módulos operativos por empresa dinámicamente sin alterar el esquema relacional (`ALTER TABLE`) ni generar tiempos de parada (*downtime*).
+* **Eficiencia Operativa:** Proporciona indexación eficiente en PostgreSQL manteniendo la velocidad de consulta propia de columnas relacionales tradicionales.
+
+### 2. Canales de Entrada por Voz y Auditoría de IA
+El canal de entrada por voz (`canal_origen = 'voz'`) combina usabilidad con auditoría técnica:
+* **Inmutabilidad y Auditoría:** Se almacena tanto el archivo de audio original (`audio_url`) como la `transcripcion_original` antes de cualquier procesamiento de palabras clave o asignación automática.
+* **Control de Calidad:** Permite verificar la fidelidad de la categorización realizada por el sistema de reconocimiento ante eventuales discrepancias.
+
+### 3. Reglas de Negocio Estrictas y Preservación de Historial
+* **Persistencia Cero-Borrado (Soft Delete):** Los usuarios y agentes nunca se eliminan físicamente de la base de datos (`activo = BOOLEAN`). Esto resguarda la integridad de la trazabilidad histórica de los reclamos.
+* **Reasignación Obligatoria:** Un agente con tickets abiertos no puede pasar a estado inactivo sin reasignar sus casos pendientes a un agente activo responsable.
+* **Trazabilidad de Adjuntos:** La subida de adjuntos/imágenes está restringida exclusivamente al usuario final (`ROLE_USER`) para evitar ambigüedades interpretativas en las respuestas de los agentes, manteniendo la resolución técnica estrictamente registrada como texto auditable.
+
 ## Estado del Proyecto
 
 🟡 En desarrollo - Entrega 1: Propuesta y Repositorio
@@ -105,3 +132,19 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
 - [ ] Despliegue en la nube
 - [ ] Informe final y video explicativo
 - [ ] Defensa oral
+
+## Roadmap de Evolución del Producto y Justificación
+
+El desarrollo de TicketDesk se estructuró en fases incrementales para asegurar un producto funcional desde las primeras etapas, priorizando la estabilidad del núcleo relacional antes de incorporar automatizaciones avanzadas.
+
+* **Fase 1: Núcleo Relacional y Multi-tenant (MVP Base)**  
+  * **Enfoque:** Configuración de la estructura de datos principal (`empresas`, `usuarios`, `tickets`, `comentarios`).
+  * **Justificación:** Es imprescindible consolidar el aislamiento de datos y el flujo relacional básico antes de permitir integraciones externas o canales alternativos.
+
+* **Fase 2: Flexibilización y Canales de Entrada (Fase Actual)**  
+  * **Enfoque:** Implementación de `configuracion_empresa` mediante JSON/JSONB y módulo de creación de tickets por voz.
+  * **Justificación:** Se introduce flexibilidad en la configuración de módulos por cliente sin alterar el esquema base, y se suma el canal de voz garantizando la audibilidad de la transcripción original.
+
+* **Fase 3: Métricas Avanzadas, SLAs y Automatización (Próximos Pasos)**  
+  * **Enfoque:** Gestión de tiempos de respuesta (SLAs), reportes comparativos entre empresas e integración de modelos de IA para categorización automática.
+  * **Justificación:** Una vez garantizada la integridad operativa y la entrada omnicanal, el sistema evoluciona hacia la optimización mediante análisis de datos y automatización avanzada.
