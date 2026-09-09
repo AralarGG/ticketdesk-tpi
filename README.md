@@ -67,6 +67,48 @@ Para las organizaciones modernas, la calidad del servicio de soporte define la r
 - Integraciones con sistemas externos (Slack, Jira, etc.)
 
 Estas exclusiones no se descartan a futuro, pero quedan fuera del MVP para poder entregar un producto funcional y bien probado dentro de los plazos de la cursada.
+---
+
+---
+## 🎨 Wireframes y Prototipos de Interfaz (Mockups)
+
+El diseño de la interfaz prioriza la claridad operativa, reduciendo la carga cognitiva tanto para el cliente como para el agente de soporte.
+
+### 1. Panel de Creación de Ticket (Vista Cliente - Web y Voz)
+
+```mermaid
+graph TD
+    subgraph Dashboard_Cliente ["🖥️ Portal del Cliente"]
+        A["[ Formulario de Ticket ]"] --> B["Campo: Título y Categoría"]
+        B --> C["Campo: Descripción"]
+        C --> D["Botón: Adjuntar Captura (Solo Clientes)"]
+        
+        A --> E["🎙️ Módulo de Voz"]
+        E --> F["[ Botón: Grabar Audio ]"]
+        F --> G["Visualización: Transcripción Automática previa al envío"]
+        
+        D --> H["[ Botón: Crear Ticket ]"]
+        G --> H
+    end
+```
+
+### 2. Flujo de Gestión y Cambios de Estado (Vista Agente / Supervisor)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Nuevo : Cliente crea ticket (Form/Voz)
+    Nuevo --> Asignado : Agente toma el ticket
+    Asignado --> En_Progreso : Inicio de diagnóstico
+    En_Progreso --> Esperando_Cliente : Agente solicita aclaración (Solo Texto)
+    Esperando_Cliente --> En_Progreso : Cliente responde
+    En_Progreso --> Escalado : Requiere intervención
+    Escalado --> Asignado_Supervisor : Reasignación a Supervisor + Motivo obligatorio
+    Asignado_Supervisor --> Resuelto : Solución confirmada
+    En_Progreso --> Resuelto : Solución confirmada por Agente
+    Resuelto --> Cerrado : Confirmación de cierre
+    Resuelto --> Reabierto : Cliente reabre el caso
+    Reabierto --> En_Progreso : Reasignación
+```
 
 ## Flujo de Estados del Ticket (Workflow)
 
