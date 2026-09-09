@@ -67,7 +67,6 @@ Estas exclusiones no se descartan a futuro, pero quedan fuera del MVP para poder
 ---
 
 ---
-
 ## 🎨 Wireframes y Prototipos de Interfaz (Mockups)
 
 El diseño de la interfaz prioriza la claridad operativa, reduciendo la carga cognitiva tanto para el cliente como para el agente de soporte.
@@ -88,6 +87,7 @@ graph TD
         D --> H["[ Botón: Crear Ticket ]"]
         G --> H
     end
+```
 
 ### 2. Flujo de Gestión y Cambios de Estado (Vista Agente / Supervisor)
 
