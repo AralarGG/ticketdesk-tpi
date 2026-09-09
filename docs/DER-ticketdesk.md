@@ -151,6 +151,16 @@ comentarios (1) ────< (N) adjuntos        [opcional, si la foto va en un
 
 ---
 
-## 4. Pendiente de Definición
+## 4. Decisión de Almacenamiento (Cerrada)
 
-- Confirmar si `configuracion_empresa.modulos_habilitados` se implementa como columna JSONB en PostgreSQL, o si se migra a una base NoSQL dedicada (decisión pendiente de acuerdo grupal, ver README principal).
+**Enfoque adoptado: PostgreSQL relacional + columnas JSONB para configuración flexible.**
+
+Todas las entidades del núcleo del negocio (`empresas`, `usuarios`, `tickets`, `comentarios`, `categorias`, `adjuntos`, `ticket_history`) se implementan como tablas relacionales tradicionales en PostgreSQL, dado que sus relaciones son estables y requieren integridad referencial (claves foráneas, transacciones).
+
+El campo `configuracion_empresa.modulos_habilitados` se implementa como columna `JSONB` dentro de PostgreSQL (no como una base NoSQL separada). Esto permite:
+
+- Modificar qué módulos tiene habilitados cada empresa sin necesidad de `ALTER TABLE` ni migraciones
+- Mantener la ventaja de indexación y performance de consulta que ofrece PostgreSQL sobre columnas JSONB
+- Evitar la complejidad de mantener dos motores de base de datos distintos (uno relacional y uno NoSQL) para un proyecto de este tamaño y plazo
+
+Esta decisión no se toma de forma aislada: coincide con el análisis técnico realizado de forma independiente por Ezequiel Sanabria (ver sección "Justificación Técnica de Arquitectura e Invariantes" en el README principal), lo cual refuerza que es la solución adecuada para el proyecto.
