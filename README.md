@@ -64,6 +64,28 @@ Para las organizaciones modernas, la calidad del servicio de soporte define la r
 - Integraciones con sistemas externos (Slack, Jira, etc.)
 
 Estas exclusiones no se descartan a futuro, pero quedan fuera del MVP para poder entregar un producto funcional y bien probado dentro de los plazos de la cursada.
+---
+
+## 🎨 Wireframes y Prototipos de Interfaz (Mockups)
+
+El diseño de la interfaz prioritiza la claridad operativa, reduciendo la carga cognitiva tanto para el cliente como para el agente de soporte.
+
+### 1. Panel de Creación de Ticket (Vista Cliente - Web y Voz)
+
+```mermaid
+graph TD
+    subgraph Dashboard_Cliente ["🖥️ Portal del Cliente"]
+        A["[ Formulario de Ticket ]"] --> B["Campo: Título y Categoría"]
+        B --> C["Campo: Descripción"]
+        C --> D["Botón: Adjuntar Captura (Solo Clientes)"]
+        
+        A --> E["🎙️ Módulo de Voz"]
+        E --> F["[ Botón: Grabar Audio ]"]
+        F --> G["Visualización: Transcripción Automática previa al envío"]
+        
+        D --> H["[ Botón: Crear Ticket ]"]
+        G --> H
+    end
 
 ## Stack Tecnológico
 
