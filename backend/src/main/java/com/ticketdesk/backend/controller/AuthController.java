@@ -8,6 +8,7 @@ import com.ticketdesk.backend.model.Usuario;
 import com.ticketdesk.backend.model.enums.Rol;
 import com.ticketdesk.backend.repository.EmpresaRepository;
 import com.ticketdesk.backend.repository.UsuarioRepository;
+import com.ticketdesk.backend.security.CredencialUsuario;
 import com.ticketdesk.backend.security.CustomUserDetailsService;
 import com.ticketdesk.backend.security.JwtService;
 import jakarta.validation.Valid;
@@ -39,16 +40,25 @@ public class AuthController {
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
 
+    /**
+     * Requiere email+password+empresaId (no solo email+password). Esto es
+     * una corrección estructural: el email es único por empresa, no global,
+     * así que el login necesita saber a qué empresa se está entrando desde
+     * el principio, sin ambigüedad, para el caso de una persona con cuentas
+     * en más de una empresa usando el mismo correo.
+     */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        String credencialCompuesta = CredencialUsuario.componer(request.getEmpresaId(), request.getEmail());
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(credencialCompuesta, request.getPassword())
         );
 
-        Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
+        Usuario usuario = usuarioRepository.findByEmpresaIdAndEmail(request.getEmpresaId(), request.getEmail())
                 .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado"));
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(credencialCompuesta);
 
         String token = jwtService.generateToken(
                 userDetails,
@@ -67,7 +77,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        if (usuarioRepository.existsByEmail(request.getEmail())) {
+        if (usuarioRepository.existsByEmpresaIdAndEmail(request.getEmpresaId(), request.getEmail())) {
             return ResponseEntity.badRequest().build();
         }
 
@@ -83,7 +93,8 @@ public class AuthController {
 
         usuarioRepository.save(usuario);
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(usuario.getEmail());
+        String credencialCompuesta = CredencialUsuario.componer(empresa.getId(), usuario.getEmail());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(credencialCompuesta);
         String token = jwtService.generateToken(
                 userDetails,
                 usuario.getRol().name(),

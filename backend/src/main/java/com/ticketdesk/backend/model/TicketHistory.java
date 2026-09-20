@@ -37,8 +37,8 @@ public class TicketHistory {
     private String valorNuevo;
 
     @ManyToOne
-    @JoinColumn(name = "usuario_id", nullable = false)
-    private Usuario usuario; // quién hizo el cambio
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario; // quién hizo el cambio; nulo si fue automático (ver TicketAutoCierreScheduler)
 
     @Column(columnDefinition = "TEXT")
     private String motivo;

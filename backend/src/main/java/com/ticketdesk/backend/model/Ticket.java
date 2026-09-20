@@ -80,6 +80,25 @@ public class Ticket {
     private EstadoTicket estado = EstadoTicket.NUEVO;
 
     /**
+     * Fecha en que el ticket pasó a RESUELTO. Se usa para calcular la
+     * ventana de confirmación (72hs por defecto): si el cliente no
+     * responde ni reabre en ese plazo, el sistema lo cierra automáticamente
+     * (silencio = conformidad tácita). Ver TicketAutoCierreScheduler.
+     */
+    @Column(name = "fecha_resuelto")
+    private LocalDateTime fechaResuelto;
+
+    /**
+     * Marca si el ticket "rebotó" a NIVEL_1 después de quedar estancado
+     * en el nivel máximo de atención (NIVEL_3) sin resolverse. Sirve para
+     * que el equipo identifique casos que ya fallaron una vez en el nivel
+     * más alto, y les preste especial atención al retomarlos desde cero.
+     * Regla definida junto al tutor (Etapa 3).
+     */
+    @Column(nullable = false)
+    private boolean reincidente = false;
+
+    /**
      * Marca si el ticket corresponde a un reclamo formal sujeto a
      * normativa de protección al consumidor (o similar), lo que puede
      * implicar plazos y manejo especial fuera de la lógica estándar

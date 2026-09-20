@@ -13,8 +13,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Le dice a Spring Security cómo buscar un usuario (por email) y qué
- * rol/permiso tiene, para poder validar el login y las credenciales.
+ * Le dice a Spring Security cómo buscar un usuario y qué rol/permiso
+ * tiene, para poder validar el login y las credenciales.
+ *
+ * El "username" que recibe no es un email suelto: es la credencial
+ * compuesta "empresaId:email" (ver CredencialUsuario), porque el email
+ * es único por empresa, no de forma global. Esto resuelve el caso de
+ * una persona con cuentas en más de una empresa usando el mismo correo.
  */
 @Service
 @RequiredArgsConstructor
@@ -23,12 +28,20 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UsuarioRepository usuarioRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + email));
+    public UserDetails loadUserByUsername(String credencialCompuesta) throws UsernameNotFoundException {
+        CredencialUsuario credencial;
+        try {
+            credencial = CredencialUsuario.parsear(credencialCompuesta);
+        } catch (IllegalArgumentException e) {
+            throw new UsernameNotFoundException(e.getMessage());
+        }
+
+        Usuario usuario = usuarioRepository.findByEmpresaIdAndEmail(credencial.empresaId(), credencial.email())
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "Usuario no encontrado: " + credencial.email() + " en la empresa indicada"));
 
         return new User(
-                usuario.getEmail(),
+                credencialCompuesta, // se mantiene el mismo formato compuesto para poder re-resolverlo en cada request
                 usuario.getPasswordHash(),
                 List.of(new SimpleGrantedAuthority(usuario.getRol().name()))
         );

@@ -8,5 +8,6 @@ public enum CampoModificado {
     ESTADO,
     AGENTE_ID,
     CATEGORIA_ID,
-    PRIORIDAD
+    PRIORIDAD,
+    NIVEL_ATENCION
 }
