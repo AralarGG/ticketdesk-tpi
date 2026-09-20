@@ -14,13 +14,14 @@ Este documento define el contrato de la API REST: rutas, verbos HTTP, autenticac
 ## 1. Autenticación
 
 ### `POST /api/v1/auth/login`
-Inicia sesión y devuelve un token JWT.
+Inicia sesión y devuelve un token JWT. Requiere `empresaId` además de email y contraseña: el email es único por empresa (no global), así que el login necesita saber desde el principio a qué empresa se está entrando, para el caso de una persona con cuentas en más de una empresa usando el mismo correo.
 
 **Request:**
 ```json
 {
   "email": "usuario@empresa.com",
-  "password": "********"
+  "password": "********",
+  "empresaId": "uuid"
 }
 ```
 
@@ -149,7 +150,7 @@ Cambia el estado de un ticket. Rol requerido: `ROLE_AGENT` o `ROLE_SUPERVISOR`.
 **Request:**
 ```json
 {
-  "estado_nuevo": "resuelto",
+  "estado_nuevo": "cerrado",
   "motivo": "Se restableció la contraseña del usuario"
 }
 ```

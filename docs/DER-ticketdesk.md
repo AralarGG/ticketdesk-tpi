@@ -40,7 +40,7 @@ Representa tanto a clientes como a agentes (diferenciados por rol).
 | id | UUID / SERIAL (PK) | Identificador único |
 | empresa_id | FK → empresas.id | Empresa a la que pertenece el usuario |
 | nombre | VARCHAR(150) | Nombre completo |
-| email | VARCHAR(150) UNIQUE | Usado para login |
+| email | VARCHAR(150) | Usado para login. Único en combinación con `empresa_id` (no global), ver "Notas de Diseño" |
 | password_hash | VARCHAR(255) | Contraseña encriptada |
 | rol | ENUM('ROLE_USER', 'ROLE_AGENT', 'ROLE_SUPERVISOR', 'ROLE_ADMIN') | Rol dentro del sistema |
 | activo | BOOLEAN | Si el usuario está activo; los agentes inactivos no pueden recibir nuevas asignaciones |
@@ -52,7 +52,7 @@ Categorías de tickets. Catálogo único y genérico, compartido por todas las e
 | Campo | Tipo | Descripción |
 |---|---|---|
 | id | UUID / SERIAL (PK) | Identificador único |
-| nombre | VARCHAR(100) | Ej: "Bug", "Consulta", "Facturación", "Reclamo de servicio" |
+| nombre | VARCHAR(100) UNIQUE | Ej: "Bug", "Consulta", "Facturación", "Reclamo de servicio" |
 | descripcion | TEXT | Detalle opcional de la categoría |
 
 ### `tickets`
@@ -70,8 +70,13 @@ Entidad central del sistema.
 | canal_origen | ENUM('formulario', 'voz') | Cómo se creó el ticket: manualmente o por mensaje de voz |
 | audio_url | VARCHAR(500) (nullable) | Si `canal_origen = 'voz'`, URL del audio original guardado (auditable) |
 | transcripcion_original | TEXT (nullable) | Texto exacto transcripto del audio, antes de cualquier interpretación de palabras clave: permite auditar si el sistema categorizó correctamente |
-| prioridad | ENUM('baja', 'media', 'alta') | Prioridad del ticket |
-| estado | ENUM('nuevo', 'asignado', 'en_progreso', 'esperando_cliente', 'escalado', 'resuelto', 'reabierto', 'cerrado') | Estado actual |
+| prioridad | ENUM('baja', 'media', 'alta') | Prioridad percibida por el cliente al crear el ticket (subjetiva) |
+| nivel_atencion | ENUM('NIVEL_1', 'NIVEL_2', 'NIVEL_3', 'CRITICO') | Nivel técnico interno, independiente de la prioridad del cliente. Cada nivel tiene un tiempo objetivo de resolución (SLA básico): NIVEL_1 = 24hs, NIVEL_2 = 48hs, NIVEL_3 = 72hs, CRITICO = 4hs (máxima urgencia, ej. caída del servicio o fallo de pagos). Ver justificación completa en README, sección "Prioridad vs. Nivel de Atención" |
+| estado | ENUM('nuevo', 'asignado', 'en_progreso', 'esperando_cliente', 'escalado', 'resuelto', 'reabierto', 'cerrado') | Estado actual. El tutor pidió mantener "resuelto" como paso intermedio: el agente marca el ticket como resuelto, y recién pasa a "cerrado" tras confirmación (explícita o por vencimiento del plazo) del cliente |
+| fecha_resuelto | TIMESTAMP (nullable) | Fecha en que el ticket pasó a "resuelto". Se usa para calcular la ventana de confirmación de 72hs: si el cliente no responde ni reabre en ese plazo, el sistema lo cierra automáticamente (silencio = conformidad tácita) |
+| reincidente | BOOLEAN | Marca si el ticket "rebotó" a NIVEL_1 luego de quedar estancado en CRITICO (nivel máximo) sin resolverse por más de 5 días. Permite identificar casos que ya fallaron una vez en el nivel más alto |
+| es_reclamo_formal | BOOLEAN | Marca si el ticket corresponde a un reclamo formal sujeto a normativa de protección al consumidor, lo que puede implicar plazos y manejo especial fuera de la lógica estándar del sistema. A profundizar en una futura iteración |
+| responsable_externo | VARCHAR(200) (nullable) | Datos de contacto de una persona responsable fuera del sistema, para casos que requieren intervención humana directa que el software no puede resolver |
 | fecha_creacion | TIMESTAMP | Fecha de creación |
 | fecha_actualizacion | TIMESTAMP | Última modificación |
 
@@ -99,7 +104,6 @@ Fotos u otros archivos asociados a un ticket o comentario.
 | url | VARCHAR(500) | URL del archivo en el servicio de almacenamiento (Cloudinary) |
 | tipo | VARCHAR(50) | Tipo de archivo (imagen, etc.) |
 | fecha_subida | TIMESTAMP | Fecha de carga |
-| subido_por_rol | ENUM('ROLE_USER') | Restringido a clientes; se guarda explícitamente para auditoría, aunque el rol ya se puede inferir vía `usuario_id` del comentario |
 
 ### `ticket_history`
 Historial de cambios relevantes de cada ticket (trazabilidad completa: no solo cambios de estado, sino también reasignación de agente, cambio de categoría o de prioridad).
@@ -143,9 +147,12 @@ comentarios (1) ────< (N) adjuntos        [opcional, si la foto va en un
 ## 3. Notas de Diseño
 
 - **Multi-tenant (multi-empresa):** casi todas las entidades principales llevan `empresa_id`, lo que permite que múltiples empresas usen el mismo sistema sin mezclar sus datos.
+- **Email único por empresa, no global:** la clave única real es la combinación (`empresa_id`, `email`), no el email solo. Esto contempla el caso de una persona que trabaja para más de una empresa cliente (por ejemplo, un agente que da soporte a dos empresas distintas) con el mismo correo: puede tener una cuenta separada en cada una. **Resuelto de forma estructural:** el login (`POST /auth/login`) ahora requiere también `empresaId`, no solo email+password, así que nunca hay ambigüedad sobre a qué cuenta se está entrando. A nivel de Spring Security, esto se implementa con un identificador compuesto `empresaId:email` (ver `CredencialUsuario`) como "username" interno.
 - **Categorías genéricas y únicas:** a diferencia del menú de módulos (que sí varía por empresa), las categorías de tickets son un catálogo fijo y compartido por todas las empresas del sistema. Esto simplifica el modelo y mantiene consistencia si en el futuro se quieren generar reportes comparativos entre distintos clientes.
 - **Fotos/adjuntos:** solo se guarda la URL (Cloudinary u otro servicio), nunca el archivo binario en la base de datos.
 - **Escalado y supervisión:** cuando un ticket pasa a estado `escalado`, se reasigna (campo `agente_id`) a un usuario con rol `ROLE_SUPERVISOR` en lugar de otro `ROLE_AGENT` común. Esto queda registrado en `ticket_history` como un cambio de `agente_id`, con el motivo "escalado" explicitado.
+- **Prioridad vs. Nivel de Atención:** son dos campos deliberadamente independientes. `prioridad` es la urgencia que percibe el cliente al crear el ticket; `nivel_atencion` es la clasificación técnica interna (NIVEL_1 a CRITICO) que define a qué nivel de soporte corresponde y su tiempo objetivo de resolución (SLA básico: 24hs / 48hs / 72hs / 4hs respectivamente). Mezclar ambos conceptos en un solo campo generaría el riesgo de que el sistema le "baje" la urgencia percibida al cliente, lo cual podría llevarlo a cerrar el ticket sin que el problema esté realmente resuelto.
+- **Rebote por estancamiento:** un ticket que llega a `CRITICO` (el nivel más alto) y queda sin avances por más de 5 días vuelve a `NIVEL_1`, marcado como `reincidente`, para que el equipo lo retome desde cero con la alerta de que ya falló una vez en el nivel de máxima urgencia. Implementado como tarea programada (`TicketAutoCierreScheduler`).
 - **Trazabilidad de creación por voz:** siguiendo el mismo criterio que con las fotos de agentes, el sistema guarda tanto el audio original como su transcripción textual. Esto permite auditar si la categorización automática por palabras clave fue correcta, sin depender únicamente de la interpretación del sistema de reconocimiento de voz.
 - **Extensibilidad:** este DER es una base. Es esperable sumar entidades como `etiquetas`, `sla_configuracion`, `notificaciones`, o `roles_personalizados` a medida que el proyecto crezca: la arquitectura multi-tenant y la separación en tablas independientes está pensada para facilitar esas ampliaciones sin romper lo existente.
 
