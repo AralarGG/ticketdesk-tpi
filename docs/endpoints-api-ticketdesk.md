@@ -223,13 +223,13 @@ Sube una foto asociada al ticket o a un comentario. **Restringido a `ROLE_USER`*
 ## 5. Categorías
 
 ### `GET /api/v1/categorias`
-Lista el catálogo único de categorías (compartido por todas las empresas).
+Lista las categorías visibles para la empresa del usuario autenticado: las genéricas (compartidas por todo el sistema) más las propias de esa empresa.
 
 **Response 200:**
 ```json
 [
-  { "id": "uuid", "nombre": "Bug", "descripcion": "..." },
-  { "id": "uuid", "nombre": "Consulta", "descripcion": "..." }
+  { "id": "uuid", "nombre": "Bug", "descripcion": "...", "esGenerica": true },
+  { "id": "uuid", "nombre": "Consulta sobre receta", "descripcion": "...", "esGenerica": false }
 ]
 ```
 

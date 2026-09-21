@@ -47,12 +47,21 @@ Representa tanto a clientes como a agentes (diferenciados por rol).
 | fecha_alta | TIMESTAMP | Fecha de registro |
 
 ### `categorias`
-Categorías de tickets. Catálogo único y genérico, compartido por todas las empresas: no personalizable por cliente, para mantener consistencia en reportes y comparabilidad entre empresas que usan el sistema.
+Categorías de tickets. Modelo híbrido: existe un catálogo genérico base (compartido por todas las empresas) y cada empresa puede sumar categorías propias, específicas de su rubro.
+
+**Corrección de diseño:** originalmente se había definido este modelo híbrido, pero en una revisión anterior se simplificó por error a un catálogo único y global. Se revierte esa simplificación porque quitaba una funcionalidad ya prevista: cada empresa cliente necesita poder adaptar el catálogo a su propio negocio (ej. una farmacia podría necesitar "Consulta sobre receta", algo que no tiene sentido para una empresa de software).
+
+**Cómo queda resuelto:**
+- `empresa_id` **nulo** → categoría genérica, visible para todas las empresas (mantiene la base común útil para reportes generales)
+- `empresa_id` **con valor** → categoría propia, visible solo para esa empresa
+- La combinación (`empresa_id`, `nombre`) es única: una empresa no puede repetir el nombre de una categoría propia
+- Al listar categorías para una empresa, se muestran las genéricas + las propias de esa empresa (nunca las de otra empresa)
 
 | Campo | Tipo | Descripción |
 |---|---|---|
 | id | UUID / SERIAL (PK) | Identificador único |
-| nombre | VARCHAR(100) UNIQUE | Ej: "Bug", "Consulta", "Facturación", "Reclamo de servicio" |
+| empresa_id | FK → empresas.id (nullable) | Nulo = categoría genérica; con valor = categoría propia de esa empresa |
+| nombre | VARCHAR(100) | Ej: "Bug", "Consulta", "Facturación", "Reclamo de servicio" |
 | descripcion | TEXT | Detalle opcional de la categoría |
 
 ### `tickets`
@@ -133,7 +142,8 @@ usuarios (1) ────< (N) tickets            [como agente asignado]
 usuarios (1) ────< (N) comentarios
 usuarios (1) ────< (N) ticket_history     [quién hizo el cambio]
 
-categorias (1) ────< (N) tickets          [catálogo único, no depende de empresas]
+categorias (1) ────< (N) tickets          [genéricas o propias de una empresa, ver detalle arriba]
+empresas (1) ────< (N) categorias         [categorías propias de esa empresa; las genéricas no tienen empresa_id]
 
 tickets (1) ────< (N) comentarios
 tickets (1) ────< (N) adjuntos
@@ -148,7 +158,7 @@ comentarios (1) ────< (N) adjuntos        [opcional, si la foto va en un
 
 - **Multi-tenant (multi-empresa):** casi todas las entidades principales llevan `empresa_id`, lo que permite que múltiples empresas usen el mismo sistema sin mezclar sus datos.
 - **Email único por empresa, no global:** la clave única real es la combinación (`empresa_id`, `email`), no el email solo. Esto contempla el caso de una persona que trabaja para más de una empresa cliente (por ejemplo, un agente que da soporte a dos empresas distintas) con el mismo correo: puede tener una cuenta separada en cada una. **Resuelto de forma estructural:** el login (`POST /auth/login`) ahora requiere también `empresaId`, no solo email+password, así que nunca hay ambigüedad sobre a qué cuenta se está entrando. A nivel de Spring Security, esto se implementa con un identificador compuesto `empresaId:email` (ver `CredencialUsuario`) como "username" interno.
-- **Categorías genéricas y únicas:** a diferencia del menú de módulos (que sí varía por empresa), las categorías de tickets son un catálogo fijo y compartido por todas las empresas del sistema. Esto simplifica el modelo y mantiene consistencia si en el futuro se quieren generar reportes comparativos entre distintos clientes.
+- **Categorías híbridas (genéricas + propias):** cada empresa puede sumar categorías propias a un catálogo genérico base compartido por todo el sistema. Esto da flexibilidad real por rubro (cada empresa adapta el catálogo a su negocio) sin perder del todo la comparabilidad entre empresas, ya que el catálogo genérico sigue existiendo como base común para reportes generales.
 - **Fotos/adjuntos:** solo se guarda la URL (Cloudinary u otro servicio), nunca el archivo binario en la base de datos.
 - **Escalado y supervisión:** cuando un ticket pasa a estado `escalado`, se reasigna (campo `agente_id`) a un usuario con rol `ROLE_SUPERVISOR` en lugar de otro `ROLE_AGENT` común. Esto queda registrado en `ticket_history` como un cambio de `agente_id`, con el motivo "escalado" explicitado.
 - **Prioridad vs. Nivel de Atención:** son dos campos deliberadamente independientes. `prioridad` es la urgencia que percibe el cliente al crear el ticket; `nivel_atencion` es la clasificación técnica interna (NIVEL_1 a CRITICO) que define a qué nivel de soporte corresponde y su tiempo objetivo de resolución (SLA básico: 24hs / 48hs / 72hs / 4hs respectivamente). Mezclar ambos conceptos en un solo campo generaría el riesgo de que el sistema le "baje" la urgencia percibida al cliente, lo cual podría llevarlo a cerrar el ticket sin que el problema esté realmente resuelto.
