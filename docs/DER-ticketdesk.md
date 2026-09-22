@@ -42,9 +42,21 @@ Representa tanto a clientes como a agentes (diferenciados por rol).
 | nombre | VARCHAR(150) | Nombre completo |
 | email | VARCHAR(150) | Usado para login. Único en combinación con `empresa_id` (no global), ver "Notas de Diseño" |
 | password_hash | VARCHAR(255) | Contraseña encriptada |
-| rol | ENUM('ROLE_USER', 'ROLE_AGENT', 'ROLE_SUPERVISOR', 'ROLE_ADMIN') | Rol dentro del sistema |
+| rol | ENUM('ROLE_USER', 'ROLE_AGENT', 'ROLE_SUPERVISOR', 'ROLE_ADMIN') | Rol **principal** del usuario (el que se usa al loguearse por defecto). Si el usuario tiene más de un rol, ver tabla `usuario_roles` |
 | activo | BOOLEAN | Si el usuario está activo; los agentes inactivos no pueden recibir nuevas asignaciones |
 | fecha_alta | TIMESTAMP | Fecha de registro |
+
+### `usuario_roles`
+Corrección pedida por el tutor: el DER original solo permitía un rol fijo por usuario. Esta tabla soporta el caso real de una empresa grande donde una misma persona puede tener más de un rol a la vez (ej. un mismo usuario es Agente y también Supervisor). Siempre incluye, como mínimo, el rol principal ya guardado en `usuarios.rol`.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| id | UUID / SERIAL (PK) | Identificador único |
+| usuario_id | FK → usuarios.id | A qué usuario pertenece este rol asignado |
+| rol | ENUM('ROLE_USER', 'ROLE_AGENT', 'ROLE_SUPERVISOR', 'ROLE_ADMIN') | Uno de los roles habilitados para ese usuario |
+| fecha_asignacion | TIMESTAMP | Cuándo se le asignó ese rol |
+
+**Restricción:** la combinación (`usuario_id`, `rol`) es única — un usuario no puede tener el mismo rol duplicado. Antes de asignar un rol nuevo, el backend verifica que no lo tenga ya ("checking de rol previo" pedido por el tutor), para dar un mensaje de error claro en vez de que falle silenciosamente por la restricción de la base de datos.
 
 ### `categorias`
 Categorías de tickets. Modelo híbrido: existe un catálogo genérico base (compartido por todas las empresas) y cada empresa puede sumar categorías propias, específicas de su rubro.
@@ -141,6 +153,7 @@ usuarios (1) ────< (N) tickets            [como creador]
 usuarios (1) ────< (N) tickets            [como agente asignado]
 usuarios (1) ────< (N) comentarios
 usuarios (1) ────< (N) ticket_history     [quién hizo el cambio]
+usuarios (1) ────< (N) usuario_roles      [roles adicionales, incluye el principal]
 
 categorias (1) ────< (N) tickets          [genéricas o propias de una empresa, ver detalle arriba]
 empresas (1) ────< (N) categorias         [categorías propias de esa empresa; las genéricas no tienen empresa_id]
@@ -158,6 +171,7 @@ comentarios (1) ────< (N) adjuntos        [opcional, si la foto va en un
 
 - **Multi-tenant (multi-empresa):** casi todas las entidades principales llevan `empresa_id`, lo que permite que múltiples empresas usen el mismo sistema sin mezclar sus datos.
 - **Email único por empresa, no global:** la clave única real es la combinación (`empresa_id`, `email`), no el email solo. Esto contempla el caso de una persona que trabaja para más de una empresa cliente (por ejemplo, un agente que da soporte a dos empresas distintas) con el mismo correo: puede tener una cuenta separada en cada una. **Resuelto de forma estructural:** el login (`POST /auth/login`) ahora requiere también `empresaId`, no solo email+password, así que nunca hay ambigüedad sobre a qué cuenta se está entrando. A nivel de Spring Security, esto se implementa con un identificador compuesto `empresaId:email` (ver `CredencialUsuario`) como "username" interno.
+- **Multi-rol de usuario:** una misma persona puede tener más de un rol habilitado (ej. Agente y Supervisor a la vez), pensado para empresas grandes donde el personal cumple más de una función. `usuarios.rol` guarda el rol principal (usado por defecto en el login y el JWT); `usuario_roles` lista todos los roles habilitados, incluido el principal. Antes de sumar un rol nuevo se verifica que no esté ya asignado.
 - **Categorías híbridas (genéricas + propias):** cada empresa puede sumar categorías propias a un catálogo genérico base compartido por todo el sistema. Esto da flexibilidad real por rubro (cada empresa adapta el catálogo a su negocio) sin perder del todo la comparabilidad entre empresas, ya que el catálogo genérico sigue existiendo como base común para reportes generales.
 - **Fotos/adjuntos:** solo se guarda la URL (Cloudinary u otro servicio), nunca el archivo binario en la base de datos.
 - **Escalado y supervisión:** cuando un ticket pasa a estado `escalado`, se reasigna (campo `agente_id`) a un usuario con rol `ROLE_SUPERVISOR` en lugar de otro `ROLE_AGENT` común. Esto queda registrado en `ticket_history` como un cambio de `agente_id`, con el motivo "escalado" explicitado.
