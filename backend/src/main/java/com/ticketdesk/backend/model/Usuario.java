@@ -48,6 +48,14 @@ public class Usuario {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    /**
+     * Rol principal del usuario: el que se usa por defecto al loguearse
+     * y el que va en el claim del token JWT. Si el usuario tiene más de
+     * un rol habilitado (ej. Agente y Supervisor a la vez, caso de
+     * empresas grandes), los roles adicionales se listan en la tabla
+     * usuario_roles (ver entidad UsuarioRol), que siempre incluye
+     * también este rol principal.
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Rol rol;
