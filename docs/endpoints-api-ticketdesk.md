@@ -150,12 +150,12 @@ Cambia el estado de un ticket. Rol requerido: `ROLE_AGENT` o `ROLE_SUPERVISOR`.
 **Request:**
 ```json
 {
-  "estado_nuevo": "cerrado",
+  "estado_nuevo": "resuelto",
   "motivo": "Se restableció la contraseña del usuario"
 }
 ```
 
-**Response 200:** ticket actualizado (genera automáticamente una fila en `ticket_history`)
+**Response 200:** ticket actualizado (genera automáticamente una fila en `historial_cambios`)
 
 ### `PATCH /api/v1/tickets/{id}/asignar`
 Asigna o reasigna un agente al ticket. Rol requerido: `ROLE_AGENT` (autoasignación) o `ROLE_SUPERVISOR` (reasignar a cualquiera).

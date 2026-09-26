@@ -49,7 +49,7 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 5. Comienza a trabajar en la resolución: cambia el estado a `en_progreso` (`PATCH /tickets/{id}/estado`)
 6. Si necesita más información del cliente, agrega un comentario (`POST /tickets/{id}/comentarios`) y cambia el estado a `esperando_cliente`
 7. Cuando el cliente responde (nuevo comentario del lado del cliente), el agente retoma el ticket y vuelve a `en_progreso`
-8. Una vez resuelto, agrega un comentario final explicando la solución y cambia el estado a `resuelto`
+8. Una vez que tiene la solución, agrega un comentario final explicándola y cambia el estado a `resuelto` (`PATCH /tickets/{id}/estado`), quedando a la espera de confirmación del cliente
 
 **Restricción aplicada en este flujo:** en el paso 6 y 8, el agente solo puede responder con texto, nunca adjuntando fotos (regla de negocio ya definida en el DER).
 
@@ -62,7 +62,7 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 1. El agente, trabajando un ticket complejo, determina que no puede resolverlo con su nivel de acceso o conocimiento
 2. Cambia el estado del ticket a `escalado`, indicando un motivo obligatorio (`PATCH /tickets/{id}/estado`)
 3. El sistema reasigna automáticamente el `agente_id` a un usuario con rol `ROLE_SUPERVISOR` disponible (`PATCH /tickets/{id}/asignar`, con motivo "escalado")
-4. El supervisor ve el ticket en su propio panel, con acceso al historial completo (`ticket_history`) para entender qué se intentó antes de escalar
+4. El supervisor ve el ticket en su propio panel, con acceso al historial completo (`historial_cambios`) para entender qué se intentó antes de escalar
 5. El supervisor continúa el flujo normal (comentarios, cambio de estado) hasta resolverlo
 
 ---
@@ -71,12 +71,14 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 
 **Actor:** Usuario/Cliente (`ROLE_USER`)
 
-1. El cliente recibe la notificación (o entra a revisar) de que su ticket pasó a estado `resuelto`
-2. Verifica si el problema realmente se solucionó
-3. Si el problema persiste, desde el detalle del ticket elige la opción "El problema continúa"
-4. El sistema cambia el estado a `reabierto` (`PATCH /tickets/{id}/estado`, iniciado por el cliente pero validado por backend)
+1. El cliente recibe la respuesta del agente y su ticket pasa a estado `resuelto`
+2. Verifica si el problema realmente se solucionó con esa respuesta
+3. Si el problema persiste, desde el detalle del ticket elige la opción "El problema continúa" (antes de que se cumplan las 72hs de la ventana de confirmación, o el sistema ya lo habrá cerrado automáticamente)
+4. El sistema cambia el estado a `reabierto` (`PATCH /tickets/{id}/estado`, iniciado por el cliente pero validado por backend), y el ticket vuelve a `en_progreso`
 5. El ticket vuelve a aparecer en el panel del agente que lo había resuelto, con todo el historial de comentarios previo intacto
 6. El agente retoma el caso desde donde había quedado
+
+**Alternativa (sin reapertura):** si el cliente no responde ni reabre dentro de las 72hs, el sistema cierra el ticket automáticamente (silencio = conformidad tácita), sin necesitar ninguna acción del cliente.
 
 ---
 
@@ -102,7 +104,7 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 3. Si el agente tiene tickets activos asignados, el sistema rechaza la operación y devuelve el listado de tickets pendientes (respuesta 409)
 4. El administrador reasigna manualmente esos tickets a otro agente activo (`PATCH /tickets/{id}/asignar` para cada uno)
 5. Una vez reasignados todos, reintenta la desactivación, que ahora se completa exitosamente
-6. El agente queda con `activo = false`, pero su historial de tickets resueltos anteriormente permanece intacto y visible en `ticket_history`
+6. El agente queda con `activo = false`, pero su historial de tickets resueltos anteriormente permanece intacto y visible en `historial_cambios`
 
 ---
 
@@ -112,9 +114,9 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 |---|---|---|
 | Alta por formulario | tickets, adjuntos | POST /tickets, POST /tickets/{id}/adjuntos |
 | Alta por voz | tickets (audio_url, transcripcion_original) | POST /tickets/voz |
-| Resolución por agente | tickets, comentarios, ticket_history | GET /tickets, PATCH /tickets/{id}/estado, POST /tickets/{id}/comentarios |
-| Escalado | tickets, usuarios (rol supervisor), ticket_history | PATCH /tickets/{id}/estado, PATCH /tickets/{id}/asignar |
-| Reapertura | tickets, ticket_history | PATCH /tickets/{id}/estado |
+| Resolución por agente | tickets, comentarios, historial_cambios | GET /tickets, PATCH /tickets/{id}/estado, POST /tickets/{id}/comentarios |
+| Escalado | tickets, usuarios (rol supervisor), historial_cambios | PATCH /tickets/{id}/estado, PATCH /tickets/{id}/asignar |
+| Reapertura | tickets, historial_cambios | PATCH /tickets/{id}/estado |
 | Configuración por empresa | empresas, configuracion_empresa | GET/PATCH /empresas/{id}/configuracion |
 | Baja de agente | usuarios, tickets | PATCH /usuarios/{id}/desactivar, PATCH /tickets/{id}/asignar |
 

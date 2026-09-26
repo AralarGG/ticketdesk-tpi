@@ -48,9 +48,9 @@ Se desarrolla primero lo que otras partes del sistema necesitan para funcionar, 
 1. Endpoint de alta de ticket (`POST /tickets`)
 2. Endpoint de listado con filtros (`GET /tickets`)
 3. Endpoint de detalle (`GET /tickets/{id}`)
-4. Endpoint de cambio de estado (`PATCH /tickets/{id}/estado`), generando automáticamente la fila en `ticket_history`
+4. Endpoint de cambio de estado (`PATCH /tickets/{id}/estado`), generando automáticamente la fila en `historial_cambios`
 5. Endpoint de asignación de agente (`PATCH /tickets/{id}/asignar`)
-6. Validar las reglas de negocio: un ticket nuevo no puede pasar directo a "resuelto" sin pasar por los estados intermedios
+6. Validar las reglas de negocio: un ticket nuevo no puede pasar directo a "resuelto" o "cerrado" sin pasar por los estados intermedios; y "cerrado" requiere haber pasado antes por "resuelto"
 
 **Depende de:** Etapa 2 (necesita saber qué usuario está haciendo la acción y con qué rol).
 **Es el corazón del sistema**: sin esto, ninguna otra funcionalidad tiene sentido.

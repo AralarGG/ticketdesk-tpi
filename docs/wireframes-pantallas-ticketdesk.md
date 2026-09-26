@@ -36,8 +36,8 @@ Corresponde al flujo 1 y 5 (creación y seguimiento de tickets propios).
 | Mis Tickets                                       |
 |----------------------------------------------------|
 | #12  No puedo iniciar sesión     [en_progreso]    |
-| #08  Consulta de facturación     [resuelto]       |
-| #05  Error al subir foto         [cerrado]        |
+| #08  Consulta de facturación     [escalado]       |
+| #05  Error al subir foto         [resuelto]       |
 +--------------------------------------------------+
 ```
 
