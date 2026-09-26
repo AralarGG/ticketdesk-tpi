@@ -160,10 +160,13 @@ Antes de escribir código, el equipo definió tres aspectos clave de diseño:
 
 **1. Modelo de datos y relaciones (DER)** Estructura de tablas en PostgreSQL: `usuarios`, `tickets`, `comentarios`, `categorías`, con sus claves foráneas y tipos de datos correspondientes. Se suma una tabla genérica `historial_cambios` para registrar cambios relevantes de cualquier entidad (no solo tickets): quién lo cambió, cuándo, y de qué valor a cuál pasó (esto sostiene el requisito de trazabilidad completa mencionado en el problema). El detalle completo del modelo de datos, con todos los campos de cada tabla, está documentado en [`/docs/DER-ticketdesk.md`](./docs/DER-ticketdesk.md).
 
-**2. Arquitectura de seguridad y roles (JWT)** La API se protege con Spring Security usando autenticación stateless mediante JWT (JSON Web Tokens): el frontend en React envía las credenciales de login, recibe un token y lo adjunta en el header de cada request posterior. Se definen los siguientes roles:
+**2. Arquitectura de seguridad y roles (JWT)** La API se protege con Spring Security usando autenticación stateless mediante JWT (JSON Web Tokens): el frontend en React envía las credenciales de login, recibe un token y lo adjunta en el header de cada request posterior. El login requiere `email`, `password` **y `empresaId`**: como el email es único por empresa y no global (ver DER), identificar también la empresa evita ambigüedad si una misma persona tiene cuentas en más de una empresa con el mismo correo. Se definen los siguientes roles:
 - `ROLE_USER` - accede solo a sus propios tickets
 - `ROLE_AGENT` - accede a todos los tickets y puede modificarlos
 - `ROLE_SUPERVISOR` - recibe los tickets escalados
+- `ROLE_ADMIN` - gestiona configuración de empresa y usuarios
+
+Un usuario puede tener más de un rol habilitado a la vez (ej. Agente y Supervisor), ver tabla `usuario_roles` en el DER.
 
 **3. Especificación de endpoints y contratos de la API REST** Se define de antemano el diseño de las rutas, los verbos HTTP y la forma exacta del JSON (DTOs) que viaja entre frontend y backend. Esto permite que el equipo de frontend pueda maquetar y mockear datos sin depender de que el backend tenga la lógica terminada, y que el backend sepa con precisión qué datos recibir y devolver en cada endpoint.
 
@@ -191,6 +194,18 @@ El canal de entrada por voz (`canal_origen = 'voz'`) combina usabilidad con audi
 - **Reasignación Obligatoria:** un agente con tickets abiertos no puede pasar a estado inactivo sin reasignar sus casos pendientes a un agente activo responsable.
 - **Trazabilidad de Adjuntos:** la subida de adjuntos/imágenes está restringida exclusivamente al usuario final (`ROLE_USER`) para evitar ambigüedades interpretativas en las respuestas de los agentes, manteniendo la resolución técnica estrictamente registrada como texto auditable.
 
+## Documentación Técnica Completa
+
+Toda la documentación de diseño está en `/docs`:
+
+- [`DER-ticketdesk.md`](./docs/DER-ticketdesk.md): modelo de datos completo (9 entidades, relaciones, decisiones de diseño justificadas)
+- [`endpoints-api-ticketdesk.md`](./docs/endpoints-api-ticketdesk.md): especificación de la API REST
+- [`flujos-usuario-ticketdesk.md`](./docs/flujos-usuario-ticketdesk.md): flujos de usuario paso a paso
+- [`wireframes-pantallas-ticketdesk.md`](./docs/wireframes-pantallas-ticketdesk.md): wireframes de las pantallas principales
+- [`plan-desarrollo-ticketdesk.md`](./docs/plan-desarrollo-ticketdesk.md): plan de desarrollo técnico por etapas
+- [`listado-modulos-ticketdesk.md`](./docs/listado-modulos-ticketdesk.md): definición de módulos y requerimientos funcionales/no funcionales del sistema
+- [`reglas-negocio-ticketdesk.md`](./docs/reglas-negocio-ticketdesk.md): las 18 reglas de negocio del sistema, con su justificación y dónde están implementadas
+
 ## Estructura del Repositorio
 
 ```
@@ -203,16 +218,16 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
 
 ## Estado del Proyecto
 
-🟡 En desarrollo: Entrega 1: Propuesta y Repositorio
+🟡 En desarrollo: Entrega 3: Arquitectura, Módulos y Reglas de Negocio (correcciones del tutor incorporadas: email único por empresa, categorías híbridas, multi-rol de usuario, historial de cambios generalizado, SLA con nivel Crítico)
 
 ## Roadmap
 
 - [x] Conformación del equipo y elección de tutor/a
-- [ ] Definición de arquitectura y modelo de datos (entidades y relaciones)
-  - [ ] Diseño del modelo de datos y relaciones (DER)
-  - [ ] Definición de arquitectura de seguridad y roles (JWT)
-  - [ ] Especificación de endpoints y contratos de la API REST
-- [ ] Desarrollo del backend (API REST)
+- [x] Definición de arquitectura y modelo de datos (entidades y relaciones)
+  - [x] Diseño del modelo de datos y relaciones (DER)
+  - [x] Definición de arquitectura de seguridad y roles (JWT)
+  - [x] Especificación de endpoints y contratos de la API REST
+- [ ] Desarrollo del backend (API REST): autenticación (JWT) y CRUD de tickets implementados y probados localmente; comentarios, adjuntos y canal de voz pendientes
 - [ ] Desarrollo del frontend
 - [ ] Despliegue en la nube
 - [ ] Informe final y video explicativo
