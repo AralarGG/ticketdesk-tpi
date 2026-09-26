@@ -67,26 +67,26 @@ Para las organizaciones modernas, la calidad del servicio de soporte define la r
 - Integraciones con sistemas externos (Slack, Jira, etc.)
 
 Estas exclusiones no se descartan a futuro, pero quedan fuera del MVP para poder entregar un producto funcional y bien probado dentro de los plazos de la cursada.
----
 
 ---
+
 ## 🎨 Wireframes y Prototipos de Interfaz (Mockups)
 
 El diseño de la interfaz prioriza la claridad operativa, reduciendo la carga cognitiva tanto para el cliente como para el agente de soporte.
 
 ### 1. Panel de Creación de Ticket (Vista Cliente - Web y Voz)
 
-```mermaid
+```
 graph TD
     subgraph Dashboard_Cliente ["🖥️ Portal del Cliente"]
         A["[ Formulario de Ticket ]"] --> B["Campo: Título y Categoría"]
         B --> C["Campo: Descripción"]
         C --> D["Botón: Adjuntar Captura (Solo Clientes)"]
-        
+
         A --> E["🎙️ Módulo de Voz"]
         E --> F["[ Botón: Grabar Audio ]"]
         F --> G["Visualización: Transcripción Automática previa al envío"]
-        
+
         D --> H["[ Botón: Crear Ticket ]"]
         G --> H
     end
@@ -94,7 +94,7 @@ graph TD
 
 ### 2. Flujo de Gestión y Cambios de Estado (Vista Agente / Supervisor)
 
-```mermaid
+```
 stateDiagram-v2
     [*] --> Nuevo : Cliente crea ticket (Form/Voz)
     Nuevo --> Asignado : Agente toma el ticket
@@ -105,14 +105,14 @@ stateDiagram-v2
     Escalado --> Asignado_Supervisor : Reasignación a Supervisor + Motivo obligatorio
     Asignado_Supervisor --> Resuelto : Solución confirmada
     En_Progreso --> Resuelto : Solución confirmada por Agente
-    Resuelto --> Cerrado : Confirmación de cierre
-    Resuelto --> Reabierto : Cliente reabre el caso
+    Resuelto --> Cerrado : Confirmación de cierre por el cliente (o vencimiento del plazo)
+    Resuelto --> Reabierto : Cliente indica que la solución no funcionó
     Reabierto --> En_Progreso : Reasignación
 ```
 
 ## Flujo de Estados del Ticket (Workflow)
 
-Pensando en un caso de uso real (no solo académico), el ciclo de vida de un ticket contempla más estados que un flujo básico de alta/resolución:
+El ciclo de vida de un ticket contempla los estados necesarios para reflejar un caso de uso real: creación, asignación, trabajo activo, posible espera de información, posible escalado, resolución con confirmación del cliente, y cierre.
 
 ```
 nuevo → asignado → en progreso → esperando al cliente → resuelto → cerrado
@@ -127,11 +127,11 @@ nuevo → asignado → en progreso → esperando al cliente → resuelto → cer
 - **En progreso:** el agente está trabajando activamente en la resolución
 - **Esperando al cliente:** el agente necesita información adicional del usuario para continuar
 - **Escalado:** el ticket requiere intervención de un agente con rol `ROLE_SUPERVISOR`
-- **Resuelto:** el agente marcó el problema como solucionado
-- **Reabierto:** el cliente indica que el problema persiste tras haber sido marcado como resuelto
-- **Cerrado:** estado final, ya no admite reapertura
+- **Resuelto:** el agente marcó el problema como solucionado. Queda a la espera de confirmación del cliente: si no responde dentro de 72hs, el sistema lo cierra automáticamente (silencio = conformidad tácita); si el cliente confirma o reabre antes, se resuelve según corresponda
+- **Reabierto:** el cliente indica que el problema persiste tras haber sido marcado como resuelto. Vuelve a `en progreso`, sin perder el historial de comentarios previo
+- **Cerrado:** estado final del ticket, una vez confirmada (explícita o tácitamente) la resolución
 
-Cada transición (incluyendo reasignación de agente, cambio de categoría o prioridad, no solo el estado) queda registrada en `ticket_history` con fecha, responsable y motivo cuando aplica.
+Cada transición (incluyendo reasignación de agente, cambio de categoría o prioridad, no solo el estado) queda registrada en `historial_cambios` con fecha, responsable y motivo cuando aplica.
 
 ## Apertura de Tickets por Voz (Voice Speaker)
 
@@ -158,7 +158,7 @@ El sistema contempla una **ventana de mantenimiento programada** (horario config
 
 Antes de escribir código, el equipo definió tres aspectos clave de diseño:
 
-**1. Modelo de datos y relaciones (DER)** Estructura de tablas en PostgreSQL: `usuarios`, `tickets`, `comentarios`, `categorías`, con sus claves foráneas y tipos de datos correspondientes. Se suma una tabla `ticket_history` para registrar cada cambio relevante del ticket (estado, agente asignado, categoría o prioridad): quién lo cambió, cuándo, y de qué valor a cuál pasó (esto sostiene el requisito de trazabilidad completa mencionado en el problema). El detalle completo del modelo de datos, con todos los campos de cada tabla, está documentado en [`/docs/DER-ticketdesk.md`](./docs/DER-ticketdesk.md).
+**1. Modelo de datos y relaciones (DER)** Estructura de tablas en PostgreSQL: `usuarios`, `tickets`, `comentarios`, `categorías`, con sus claves foráneas y tipos de datos correspondientes. Se suma una tabla genérica `historial_cambios` para registrar cambios relevantes de cualquier entidad (no solo tickets): quién lo cambió, cuándo, y de qué valor a cuál pasó (esto sostiene el requisito de trazabilidad completa mencionado en el problema). El detalle completo del modelo de datos, con todos los campos de cada tabla, está documentado en [`/docs/DER-ticketdesk.md`](./docs/DER-ticketdesk.md).
 
 **2. Arquitectura de seguridad y roles (JWT)** La API se protege con Spring Security usando autenticación stateless mediante JWT (JSON Web Tokens): el frontend en React envía las credenciales de login, recibe un token y lo adjunta en el header de cada request posterior. Se definen los siguientes roles:
 - `ROLE_USER` - accede solo a sus propios tickets
