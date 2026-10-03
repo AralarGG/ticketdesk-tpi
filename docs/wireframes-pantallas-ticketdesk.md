@@ -137,14 +137,17 @@ Corresponde al flujo 3 (paso 1 y 2: listado y filtrado).
 | TicketDesk        Hola, María López    [Salir]    |
 +--------------------------------------------------+
 | Filtros: Estado [Nuevo v]  Prioridad [Alta v]     |
+|          Nivel de Atención [Todos v]              |
 +--------------------------------------------------+
 | Tickets (8 de 42)                                 |
 |----------------------------------------------------|
-| #12  No puedo iniciar sesión   [nuevo]    [Alta]  |
-| #15  Error de pago              [nuevo]    [Alta] |
-| #18  Consulta general           [asignado][Media] |
+| #12  No puedo iniciar sesión  [nuevo]  [Alta] [N1] |
+| #15  Error de pago         [nuevo] [Alta] [CRÍTICO]|
+| #18  Consulta general    [asignado] [Media]  [N2]  |
 +--------------------------------------------------+
 ```
+
+**Nota:** la etiqueta de Nivel de Atención (N1, N2, N3, CRÍTICO) se muestra junto a la prioridad, pero son campos independientes (ver justificación en README, sección "Prioridad vs. Nivel de Atención"). El nivel CRÍTICO se destaca visualmente (ej. color rojo) por su SLA de 4hs.
 
 ---
 
@@ -158,6 +161,7 @@ Corresponde al flujo 3 (pasos 3 a 8) y flujo 4 (escalado).
 +--------------------------------------------------+
 | No puedo iniciar sesión                           |
 | Cliente: Juan Pérez | Categoría: Bug | Alta        |
+| Nivel de Atención: [ N1        v ]  (SLA: 24hs)   |
 +--------------------------------------------------+
 | [ Asignarme este ticket ]                         |
 +--------------------------------------------------+

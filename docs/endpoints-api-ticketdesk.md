@@ -298,3 +298,7 @@ Desactiva un usuario (soft delete). Si es un agente con tickets asignados, requi
 
 - Endpoints de reportes/métricas (Fase 3 del roadmap, fuera del MVP actual)
 - Endpoint de notificaciones (fuera de alcance del MVP)
+
+## Convención de Identificadores de Recurso
+
+Todos los endpoints que operan sobre un recurso específico llevan su identificador explícito en la ruta (`{id}`), por ejemplo `GET /tickets/{id}`, `PATCH /usuarios/{id}/desactivar`. Los únicos endpoints sin `{id}` son operaciones a nivel de colección, donde no aplica: `POST /tickets` (crear, todavía no existe un id) y `GET /tickets` (listar todos). Ningún endpoint de este documento queda con la ruta incompleta o sin definir su identificador cuando corresponde.
