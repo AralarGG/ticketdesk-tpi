@@ -102,8 +102,7 @@ stateDiagram-v2
     En_Progreso --> Esperando_Cliente : Agente solicita aclaración (Solo Texto)
     Esperando_Cliente --> En_Progreso : Cliente responde
     En_Progreso --> Escalado : Requiere intervención
-    Escalado --> Asignado_Supervisor : Reasignación a Supervisor + Motivo obligatorio
-    Asignado_Supervisor --> Resuelto : Solución confirmada
+    Escalado --> Resuelto : Reasignado a Supervisor (motivo obligatorio), solución confirmada
     En_Progreso --> Resuelto : Solución confirmada por Agente
     Resuelto --> Cerrado : Confirmación de cierre por el cliente (o vencimiento del plazo)
     Resuelto --> Reabierto : Cliente indica que la solución no funcionó
