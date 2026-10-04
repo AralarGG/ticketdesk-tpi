@@ -1,11 +1,10 @@
 package com.ticketdesk.backend.service;
 
+import com.ticketdesk.backend.model.HistorialCambios;
 import com.ticketdesk.backend.model.Ticket;
-import com.ticketdesk.backend.model.TicketHistory;
-import com.ticketdesk.backend.model.enums.CampoModificado;
 import com.ticketdesk.backend.model.enums.EstadoTicket;
 import com.ticketdesk.backend.model.enums.NivelAtencion;
-import com.ticketdesk.backend.repository.TicketHistoryRepository;
+import com.ticketdesk.backend.repository.HistorialCambiosRepository;
 import com.ticketdesk.backend.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -39,9 +38,10 @@ public class TicketAutoCierreScheduler {
 
     private static final int HORAS_VENTANA_CONFIRMACION = 72;
     private static final int DIAS_ESTANCAMIENTO_NIVEL_MAXIMO = 5;
+    private static final String ENTIDAD_TICKET = "Ticket";
 
     private final TicketRepository ticketRepository;
-    private final TicketHistoryRepository ticketHistoryRepository;
+    private final HistorialCambiosRepository historialCambiosRepository;
 
     /**
      * Corre una vez por hora. Frecuencia elegida para no sobrecargar la
@@ -67,7 +67,7 @@ public class TicketAutoCierreScheduler {
             ticket.setEstado(EstadoTicket.CERRADO);
             ticketRepository.save(ticket);
 
-            registrarHistorialAutomatico(ticket, CampoModificado.ESTADO, estadoAnterior,
+            registrarHistorialAutomatico(ticket.getId(), "estado", estadoAnterior,
                     EstadoTicket.CERRADO.name(),
                     "Cierre automático: sin respuesta del cliente dentro de las "
                             + HORAS_VENTANA_CONFIRMACION + " horas de confirmación (silencio = conformidad tácita)");
@@ -89,22 +89,23 @@ public class TicketAutoCierreScheduler {
             ticket.setReincidente(true);
             ticketRepository.save(ticket);
 
-            registrarHistorialAutomatico(ticket, CampoModificado.NIVEL_ATENCION, nivelAnterior,
+            registrarHistorialAutomatico(ticket.getId(), "nivel_atencion", nivelAnterior,
                     NivelAtencion.NIVEL_1.name(),
                     "Rebote automático: sin avances por más de " + DIAS_ESTANCAMIENTO_NIVEL_MAXIMO
                             + " días en nivel máximo de atención. Marcado como reincidente.");
         }
     }
 
-    private void registrarHistorialAutomatico(Ticket ticket, CampoModificado campo,
+    private void registrarHistorialAutomatico(java.util.UUID ticketId, String campo,
                                                String valorAnterior, String valorNuevo, String motivo) {
-        TicketHistory historial = new TicketHistory();
-        historial.setTicket(ticket);
+        HistorialCambios historial = new HistorialCambios();
+        historial.setEntidad(ENTIDAD_TICKET);
+        historial.setEntidadId(ticketId);
         historial.setCampoModificado(campo);
         historial.setValorAnterior(valorAnterior);
         historial.setValorNuevo(valorNuevo);
         historial.setUsuario(null); // cambio hecho por el sistema, no por una persona
         historial.setMotivo(motivo);
-        ticketHistoryRepository.save(historial);
+        historialCambiosRepository.save(historial);
     }
 }

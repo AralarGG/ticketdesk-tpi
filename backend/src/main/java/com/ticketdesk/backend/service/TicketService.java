@@ -4,7 +4,6 @@ import com.ticketdesk.backend.dto.AsignarAgenteRequest;
 import com.ticketdesk.backend.dto.CambiarEstadoRequest;
 import com.ticketdesk.backend.dto.CrearTicketRequest;
 import com.ticketdesk.backend.model.*;
-import com.ticketdesk.backend.model.enums.CampoModificado;
 import com.ticketdesk.backend.model.enums.CanalOrigen;
 import com.ticketdesk.backend.model.enums.EstadoTicket;
 import com.ticketdesk.backend.repository.*;
@@ -19,10 +18,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TicketService {
 
+    private static final String ENTIDAD_TICKET = "Ticket";
+
     private final TicketRepository ticketRepository;
     private final UsuarioRepository usuarioRepository;
     private final CategoriaRepository categoriaRepository;
-    private final TicketHistoryRepository ticketHistoryRepository;
+    private final HistorialCambiosRepository historialCambiosRepository;
 
     /**
      * Alta de ticket por formulario (canal FORMULARIO).
@@ -70,7 +71,15 @@ public class TicketService {
     }
 
     /**
-     * Cambia el estado de un ticket y registra la transición en ticket_history.
+     * Historial completo de un ticket puntual (usa la tabla genérica
+     * historial_cambios, filtrando por entidad="Ticket").
+     */
+    public List<HistorialCambios> obtenerHistorial(UUID ticketId) {
+        return historialCambiosRepository.findByEntidadAndEntidadIdOrderByFechaDesc(ENTIDAD_TICKET, ticketId);
+    }
+
+    /**
+     * Cambia el estado de un ticket y registra la transición en historial_cambios.
      * No valida acá las transiciones permitidas (ej. no saltar de NUEVO a CERRADO):
      * esa validación de máquina de estados se agrega como siguiente paso,
      * una vez confirmado el detalle exacto del flujo con el tutor.
@@ -93,7 +102,7 @@ public class TicketService {
 
         ticketRepository.save(ticket);
 
-        registrarHistorial(ticket, CampoModificado.ESTADO, estadoAnterior,
+        registrarHistorial(ticket.getId(), "estado", estadoAnterior,
                 request.getEstadoNuevo().name(), usuarioQueCambia, request.getMotivo());
 
         return ticket;
@@ -114,21 +123,28 @@ public class TicketService {
         ticket.setAgente(nuevoAgente);
         ticketRepository.save(ticket);
 
-        registrarHistorial(ticket, CampoModificado.AGENTE_ID, agenteAnterior,
+        registrarHistorial(ticket.getId(), "agente_id", agenteAnterior,
                 nuevoAgente.getId().toString(), usuarioQueAsigna, request.getMotivo());
 
         return ticket;
     }
 
-    private void registrarHistorial(Ticket ticket, CampoModificado campo, String valorAnterior,
+    /**
+     * Registra un cambio en la tabla genérica de historial (historial_cambios),
+     * marcando explícitamente que la entidad afectada es un Ticket. Otras
+     * entidades (Usuario, Empresa, etc.) pueden usar el mismo repositorio
+     * con su propio valor de "entidad" cuando se les sume auditoría.
+     */
+    private void registrarHistorial(UUID ticketId, String campo, String valorAnterior,
                                      String valorNuevo, Usuario usuario, String motivo) {
-        TicketHistory historial = new TicketHistory();
-        historial.setTicket(ticket);
+        HistorialCambios historial = new HistorialCambios();
+        historial.setEntidad(ENTIDAD_TICKET);
+        historial.setEntidadId(ticketId);
         historial.setCampoModificado(campo);
         historial.setValorAnterior(valorAnterior);
         historial.setValorNuevo(valorNuevo);
         historial.setUsuario(usuario);
         historial.setMotivo(motivo);
-        ticketHistoryRepository.save(historial);
+        historialCambiosRepository.save(historial);
     }
 }
