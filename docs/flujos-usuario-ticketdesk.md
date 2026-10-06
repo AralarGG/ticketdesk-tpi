@@ -12,7 +12,7 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 
 1. El cliente inicia sesión con su email y contraseña (`POST /auth/login`)
 2. Accede a su panel de usuario y hace clic en "Nuevo ticket"
-3. Completa el formulario: título, descripción, categoría (seleccionada de un listado fijo) y prioridad
+3. Completa el formulario: título, descripción, categoría (seleccionada del listado de categorías disponibles para su empresa) y prioridad
 4. Opcionalmente, adjunta una o más fotos como evidencia del problema
 5. Envía el formulario (`POST /tickets`, seguido de `POST /tickets/{id}/adjuntos` si hay fotos)
 6. El sistema crea el ticket en estado `nuevo` y lo confirma en pantalla con un número de referencia
@@ -28,11 +28,11 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 
 1. El cliente inicia sesión
 2. En el panel de usuario, en vez de "Nuevo ticket" con formulario, elige la opción "Crear por voz"
-3. Graba un mensaje de audio describiendo su problema (ej. "no puedo iniciar sesión en la aplicación")
-4. Envía el audio (`POST /tickets/voz`)
-5. El sistema procesa el audio: lo transcribe a texto y busca palabras clave para sugerir categoría
-6. Se muestra al cliente una pantalla de confirmación con el título/categoría sugeridos y la transcripción completa, para que confirme o corrija antes de crear el ticket definitivamente
-7. El cliente confirma, y el ticket se crea en estado `nuevo`, guardando tanto el audio original como la transcripción
+3. Graba un mensaje de audio describiendo su problema (ej. "no puedo iniciar sesión en la aplicación"); el navegador transcribe lo que dice a texto mientras graba
+4. La aplicación envía la transcripción (`POST /tickets/voz/sugerencia`) y el sistema busca palabras clave para sugerir categoría y título
+5. Se muestra al cliente una pantalla de confirmación con el título y la categoría sugeridos y la transcripción completa, para que confirme o corrija antes de crear el ticket
+6. El cliente confirma y la aplicación envía el audio original, la transcripción y la categoría elegida (`POST /tickets/voz`)
+7. El sistema sube el audio a Cloudinary y crea el ticket en estado `nuevo`, guardando tanto la URL del audio original como la transcripción
 
 **Punto de control clave:** el cliente siempre revisa la transcripción antes de confirmar. Esto evita que un error de reconocimiento de voz genere un ticket mal categorizado sin que nadie lo note.
 
@@ -48,7 +48,7 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 4. Se autoasigna el ticket (`PATCH /tickets/{id}/asignar`), lo que cambia el estado a `asignado`
 5. Comienza a trabajar en la resolución: cambia el estado a `en_progreso` (`PATCH /tickets/{id}/estado`)
 6. Si necesita más información del cliente, agrega un comentario (`POST /tickets/{id}/comentarios`) y cambia el estado a `esperando_cliente`
-7. Cuando el cliente responde (nuevo comentario del lado del cliente), el agente retoma el ticket y vuelve a `en_progreso`
+7. Cuando el cliente responde (nuevo comentario del lado del cliente), el ticket vuelve automáticamente a `en_progreso` y el agente retoma el caso
 8. Una vez que tiene la solución, agrega un comentario final explicándola y cambia el estado a `resuelto` (`PATCH /tickets/{id}/estado`), quedando a la espera de confirmación del cliente
 
 **Restricción aplicada en este flujo:** en el paso 6 y 8, el agente solo puede responder con texto, nunca adjuntando fotos (regla de negocio ya definida en el DER).
@@ -61,7 +61,7 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 
 1. El agente, trabajando un ticket complejo, determina que no puede resolverlo con su nivel de acceso o conocimiento
 2. Cambia el estado del ticket a `escalado`, indicando un motivo obligatorio (`PATCH /tickets/{id}/estado`)
-3. El sistema reasigna automáticamente el `agente_id` a un usuario con rol `ROLE_SUPERVISOR` disponible (`PATCH /tickets/{id}/asignar`, con motivo "escalado")
+3. Como parte de ese mismo cambio de estado, el sistema sube un nivel de atención (hasta Nivel 3) y reasigna automáticamente el `agente_id` al supervisor activo con menos tickets abiertos, registrando ambos cambios en el historial
 4. El supervisor ve el ticket en su propio panel, con acceso al historial completo (`historial_cambios`) para entender qué se intentó antes de escalar
 5. El supervisor continúa el flujo normal (comentarios, cambio de estado) hasta resolverlo
 
@@ -97,12 +97,12 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 
 ## 7. Flujo: Agente se da de baja del sistema
 
-**Actor:** Administrador (`ROLE_ADMIN`)
+**Actor:** Administrador (`ROLE_ADMIN`) y Supervisor (`ROLE_SUPERVISOR`)
 
 1. El administrador identifica que un agente debe darse de baja (ej. dejó la empresa)
 2. Intenta desactivarlo (`PATCH /usuarios/{id}/desactivar`)
-3. Si el agente tiene tickets activos asignados, el sistema rechaza la operación y devuelve el listado de tickets pendientes (respuesta 409)
-4. El administrador reasigna manualmente esos tickets a otro agente activo (`PATCH /tickets/{id}/asignar` para cada uno)
+3. Si el agente tiene tickets activos asignados, el sistema rechaza la operación y responde con un mensaje que indica cuántos tickets abiertos tiene a su cargo (respuesta 409)
+4. Un supervisor reasigna manualmente esos tickets a otro agente activo (`PATCH /tickets/{id}/asignar` para cada uno; reasignar a otra persona requiere rol de supervisor)
 5. Una vez reasignados todos, reintenta la desactivación, que ahora se completa exitosamente
 6. El agente queda con `activo = false`, pero su historial de tickets resueltos anteriormente permanece intacto y visible en `historial_cambios`
 
@@ -113,7 +113,7 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 | Flujo | Entidades involucradas | Endpoints involucrados |
 |---|---|---|
 | Alta por formulario | tickets, adjuntos | POST /tickets, POST /tickets/{id}/adjuntos |
-| Alta por voz | tickets (audio_url, transcripcion_original) | POST /tickets/voz |
+| Alta por voz | tickets (audio_url, transcripcion_original) | POST /tickets/voz/sugerencia, POST /tickets/voz |
 | Resolución por agente | tickets, comentarios, historial_cambios | GET /tickets, PATCH /tickets/{id}/estado, POST /tickets/{id}/comentarios |
 | Escalado | tickets, usuarios (rol supervisor), historial_cambios | PATCH /tickets/{id}/estado, PATCH /tickets/{id}/asignar |
 | Reapertura | tickets, historial_cambios | PATCH /tickets/{id}/estado |

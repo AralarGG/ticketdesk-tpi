@@ -32,7 +32,7 @@ Este documento reúne en un solo lugar todas las reglas de negocio del sistema, 
 
 **Por qué:** evita que un ticket quede sin ningún responsable activo a cargo.
 
-**Implementado en:** especificado en `endpoints-api-ticketdesk.md` (`PATCH /usuarios/{id}/desactivar`, respuesta 409 si hay tickets pendientes). Lógica de servicio pendiente de implementar (Etapa 6 del plan de desarrollo).
+**Implementado en:** `UsuarioService.desactivar()` (`PATCH /usuarios/{id}/desactivar`, responde 409 con la cantidad de tickets abiertos si el agente todavía tiene alguno a su cargo).
 
 ## RN4: Un usuario puede tener más de un rol habilitado
 
@@ -88,7 +88,7 @@ Este documento reúne en un solo lugar todas las reglas de negocio del sistema, 
 
 **Por qué:** separa claramente el nivel de resolución estándar del nivel que requiere intervención de mayor jerarquía o experiencia.
 
-**Implementado en:** `Rol.java` (`ROLE_SUPERVISOR`), `TicketService.asignarAgente()`.
+**Implementado en:** `TicketService.cambiarEstado()` y `TicketService.aplicarEscalado()`: al escalar se exige el motivo, el ticket sube un nivel de atención (hasta `NIVEL_3`) y se reasigna al supervisor con menos tickets abiertos. `Rol.java` define `ROLE_SUPERVISOR`.
 
 ---
 
@@ -136,7 +136,7 @@ Este documento reúne en un solo lugar todas las reglas de negocio del sistema, 
 
 **Por qué:** una foto puede contener información ambigua sujeta a interpretación subjetiva de quien la ve después. El objetivo del sistema es mantener control total y trazabilidad verificable de cada paso de la resolución, por eso toda respuesta técnica del agente queda registrada como texto auditable.
 
-**Implementado en:** especificado en `DER-ticketdesk.md` y `endpoints-api-ticketdesk.md` (`POST /tickets/{id}/adjuntos`, respuesta 403 si el rol no es `ROLE_USER`). Validación de servicio pendiente (Etapa 4 del plan de desarrollo).
+**Implementado en:** `ComunicacionService.subirAdjunto()` (`POST /tickets/{id}/adjuntos`, responde 403 si el usuario no tiene rol `ROLE_USER`). Además solo acepta imágenes y respeta el módulo `adjuntos` de la empresa.
 
 ## RN14: Trazabilidad de tickets creados por voz
 
@@ -172,7 +172,7 @@ Este documento reúne en un solo lugar todas las reglas de negocio del sistema, 
 
 **Por qué:** permite realizar tareas de mantenimiento, actualizaciones o backups sin afectar el uso normal del sistema en horario productivo. Al ser configurable por empresa (no fijo para todo el sistema), cada cliente puede elegir el horario que menos impacte su propia operación.
 
-**Implementado en:** `ConfiguracionEmpresa.java` (campos `ventanaMantenimientoInicio`, `ventanaMantenimientoFin`). Lógica de aplicación (bloqueo efectivo de altas durante esa ventana) pendiente de implementar (Etapa 7 del plan de desarrollo).
+**Implementado en:** `ConfiguracionEmpresa.java` (campos `ventanaMantenimientoInicio`, `ventanaMantenimientoFin`, configurables con `PATCH /empresas/{id}/configuracion`) y `MantenimientoFilter.java`, que durante la ventana responde 503 a las escrituras sobre tickets y deja pasar las consultas. Soporta ventanas que cruzan la medianoche.
 
 ## RN18: Casos fuera del alcance del software
 

@@ -18,7 +18,7 @@ Se desarrolla primero lo que otras partes del sistema necesitan para funcionar, 
 
 1. Inicializar proyecto Spring Boot (Spring Initializr: Web, JPA, Security, PostgreSQL Driver)
 2. Configurar conexión a PostgreSQL (local primero, luego a la instancia en la nube)
-3. Crear las entidades JPA según el DER: `Empresa`, `Usuario`, `Categoria`, `Ticket`, `Comentario`, `Adjunto`, `TicketHistory`, `ConfiguracionEmpresa`
+3. Crear las entidades JPA según el DER: `Empresa`, `Usuario`, `Categoria`, `Ticket`, `Comentario`, `Adjunto`, `HistorialCambios`, `UsuarioRol`, `ConfiguracionEmpresa`
 4. Generar las tablas (vía JPA `ddl-auto` en desarrollo, o migraciones si el equipo prefiere Flyway/Liquibase)
 5. Cargar datos de prueba (seed) para las categorías genéricas y una empresa de ejemplo
 
@@ -117,13 +117,13 @@ Se desarrolla primero lo que otras partes del sistema necesitan para funcionar, 
 
 **Objetivo:** sumar el canal de voz como forma alternativa de creación de tickets.
 
-1. Investigar e integrar una API de speech-to-text (a definir: Google Speech-to-Text, Whisper de OpenAI, u otra)
-2. Backend: endpoint `POST /tickets/voz`, que recibe el audio, lo transcribe, sugiere categoría por palabras clave y guarda `audio_url` + `transcripcion_original`
+1. Definir dónde se transcribe: se usa la Web Speech API del navegador (sin servicio externo de pago), de modo que el backend recibe el texto ya transcripto junto con el audio
+2. Backend: endpoint `POST /tickets/voz/sugerencia` (sugiere categoría y título por palabras clave) y endpoint `POST /tickets/voz` (recibe audio, transcripción y categoría confirmada; guarda `audio_url` + `transcripcion_original`)
 3. Frontend: pantalla de grabación + pantalla de confirmación de la transcripción antes de crear el ticket
 
 **Depende de:** Etapa 3 (reutiliza toda la lógica de creación de ticket ya construida, solo cambia el origen de los datos).
 
-**Se deja para el final** porque es la funcionalidad diferencial, no crítica para que el sistema funcione, y depende de una integración externa (API de voz) que puede llevar tiempo de investigación.
+**Se deja para el final** porque es la funcionalidad diferencial y depende de que el flujo básico de creación de tickets ya esté resuelto. La transcripción en el navegador evita depender de un servicio externo.
 
 ---
 
@@ -134,7 +134,7 @@ Se desarrolla primero lo que otras partes del sistema necesitan para funcionar, 
 1. Desplegar backend en Render o Railway
 2. Desplegar frontend en Vercel o Netlify
 3. Migrar la base de datos a una instancia en la nube (Supabase o similar)
-4. Configurar variables de entorno (credenciales de base de datos, claves de API de voz, Cloudinary)
+4. Configurar variables de entorno (credenciales de base de datos, claves de Cloudinary, secreto de JWT)
 
 **Puede arrancar en paralelo** desde etapas tempranas (por ejemplo, desplegar una versión mínima ya en la Etapa 3), para no dejar todo el trabajo de infraestructura para el final.
 
@@ -168,12 +168,6 @@ Etapa 4 (Comentarios/    Etapa 5 (Frontend
 Etapa 9 (Despliegue): en paralelo, desde Etapa 3 en adelante
 ```
 
-## Nota sobre Repartición de Trabajo en Equipo
+## Nota sobre la Ejecución del Plan
 
-Dado que el equipo son tres integrantes, una posible división (a confirmar entre todos) es:
-
-- Una persona enfocada en backend (Etapas 1 a 4, 6, 7, 8 del lado servidor)
-- Una persona enfocada en frontend (Etapa 5 en adelante, del lado cliente)
-- Una persona rotando entre ambos según necesidad, y llevando adelante el despliegue (Etapa 9) y la documentación
-
-Esta repartición es una propuesta inicial: se ajustará según disponibilidad real de cada integrante durante las próximas semanas.
+El proyecto lo desarrolla un único integrante, por decisión del equipo docente. Por eso el orden de las etapas prioriza tener un sistema que funcione de punta a punta: primero el backend completo y probado (Etapas 1 a 4, 6, 7 y 8 del lado servidor), después el frontend sobre esa API (Etapa 5 y las pantallas de las etapas siguientes) y, por último, el despliegue (Etapa 9) y la documentación final.
