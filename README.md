@@ -226,7 +226,7 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
   - [x] Diseño del modelo de datos y relaciones (DER)
   - [x] Definición de arquitectura de seguridad y roles (JWT)
   - [x] Especificación de endpoints y contratos de la API REST
-- [ ] Desarrollo del backend (API REST): autenticación (JWT) y CRUD de tickets implementados y probados localmente; comentarios, adjuntos y canal de voz pendientes
+- [x] Desarrollo del backend (API REST): autenticación (JWT), tickets con máquina de estados, comentarios y adjuntos, categorías, usuarios y roles, configuración por empresa, ventana de mantenimiento y canal de voz
 - [ ] Desarrollo del frontend
 - [ ] Despliegue en la nube
 - [ ] Informe final y video explicativo
