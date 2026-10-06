@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Aplica automáticamente dos reglas de negocio definidas junto al tutor (Etapa 3):
@@ -57,10 +56,7 @@ public class TicketAutoCierreScheduler {
     private void cerrarPorSilencioDelCliente() {
         LocalDateTime limite = LocalDateTime.now().minusHours(HORAS_VENTANA_CONFIRMACION);
 
-        List<Ticket> candidatos = ticketRepository.findAll().stream()
-                .filter(t -> t.getEstado() == EstadoTicket.RESUELTO)
-                .filter(t -> t.getFechaResuelto() != null && t.getFechaResuelto().isBefore(limite))
-                .collect(Collectors.toList());
+        List<Ticket> candidatos = ticketRepository.findByEstadoAndFechaResueltoBefore(EstadoTicket.RESUELTO, limite);
 
         for (Ticket ticket : candidatos) {
             String estadoAnterior = ticket.getEstado().name();
@@ -77,11 +73,8 @@ public class TicketAutoCierreScheduler {
     private void rebotarPorEstancamientoEnNivelMaximo() {
         LocalDateTime limite = LocalDateTime.now().minusDays(DIAS_ESTANCAMIENTO_NIVEL_MAXIMO);
 
-        List<Ticket> candidatos = ticketRepository.findAll().stream()
-                .filter(t -> t.getNivelAtencion() == NivelAtencion.CRITICO)
-                .filter(t -> t.getEstado() != EstadoTicket.CERRADO && t.getEstado() != EstadoTicket.RESUELTO)
-                .filter(t -> t.getFechaActualizacion() != null && t.getFechaActualizacion().isBefore(limite))
-                .collect(Collectors.toList());
+        List<Ticket> candidatos = ticketRepository.findByNivelAtencionAndEstadoNotInAndFechaActualizacionBefore(
+                NivelAtencion.CRITICO, List.of(EstadoTicket.CERRADO, EstadoTicket.RESUELTO), limite);
 
         for (Ticket ticket : candidatos) {
             String nivelAnterior = ticket.getNivelAtencion().name();

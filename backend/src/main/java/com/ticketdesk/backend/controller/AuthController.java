@@ -1,13 +1,16 @@
 package com.ticketdesk.backend.controller;
 
 import com.ticketdesk.backend.dto.AuthResponse;
+import com.ticketdesk.backend.dto.EmpresaPublicaResponse;
 import com.ticketdesk.backend.dto.LoginRequest;
 import com.ticketdesk.backend.dto.RegisterRequest;
 import com.ticketdesk.backend.model.Empresa;
 import com.ticketdesk.backend.model.Usuario;
+import com.ticketdesk.backend.model.UsuarioRol;
 import com.ticketdesk.backend.model.enums.Rol;
 import com.ticketdesk.backend.repository.EmpresaRepository;
 import com.ticketdesk.backend.repository.UsuarioRepository;
+import com.ticketdesk.backend.repository.UsuarioRolRepository;
 import com.ticketdesk.backend.security.CredencialUsuario;
 import com.ticketdesk.backend.security.CustomUserDetailsService;
 import com.ticketdesk.backend.security.JwtService;
@@ -20,7 +23,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 /**
  * Corresponde a la especificación de endpoints:
@@ -36,9 +41,22 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
+    private final UsuarioRolRepository usuarioRolRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
+
+    /**
+     * Lista pública de empresas activas, para que la pantalla de login pueda
+     * ofrecer a qué empresa se quiere ingresar (el login exige empresaId).
+     */
+    @GetMapping("/empresas")
+    public ResponseEntity<List<EmpresaPublicaResponse>> empresas() {
+        return ResponseEntity.ok(empresaRepository.findAll().stream()
+                .filter(Empresa::isActiva)
+                .map(EmpresaPublicaResponse::new)
+                .collect(Collectors.toList()));
+    }
 
     /**
      * Requiere email+password+empresaId (no solo email+password). Esto es
@@ -78,10 +96,11 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         if (usuarioRepository.existsByEmpresaIdAndEmail(request.getEmpresaId(), request.getEmail())) {
-            return ResponseEntity.badRequest().build();
+            throw new IllegalStateException("Ya existe un usuario con ese email en la empresa");
         }
 
         Empresa empresa = empresaRepository.findById(request.getEmpresaId())
+                .filter(Empresa::isActiva)
                 .orElseThrow(() -> new NoSuchElementException("Empresa no encontrada"));
 
         Usuario usuario = new Usuario();
@@ -92,6 +111,12 @@ public class AuthController {
         usuario.setEmpresa(empresa);
 
         usuarioRepository.save(usuario);
+
+        // usuario_roles siempre incluye el rol principal (regla RN4)
+        UsuarioRol rolPrincipal = new UsuarioRol();
+        rolPrincipal.setUsuario(usuario);
+        rolPrincipal.setRol(usuario.getRol());
+        usuarioRolRepository.save(rolPrincipal);
 
         String credencialCompuesta = CredencialUsuario.componer(empresa.getId(), usuario.getEmail());
         UserDetails userDetails = userDetailsService.loadUserByUsername(credencialCompuesta);

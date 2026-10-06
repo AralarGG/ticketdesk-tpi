@@ -3,11 +3,8 @@ package com.ticketdesk.backend.controller;
 import com.ticketdesk.backend.dto.AdjuntoResponse;
 import com.ticketdesk.backend.dto.ComentarioResponse;
 import com.ticketdesk.backend.dto.CrearComentarioRequest;
-import com.ticketdesk.backend.model.Adjunto;
-import com.ticketdesk.backend.model.Comentario;
 import com.ticketdesk.backend.model.Usuario;
-import com.ticketdesk.backend.repository.UsuarioRepository;
-import com.ticketdesk.backend.security.CredencialUsuario;
+import com.ticketdesk.backend.security.UsuarioActual;
 import com.ticketdesk.backend.service.ComunicacionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,15 +15,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Corresponde a la especificación de endpoints:
- * POST   /api/v1/tickets/{id}/comentarios
- * GET    /api/v1/tickets/{id}/comentarios
- * POST   /api/v1/tickets/{id}/adjuntos
+ * POST   /api/v1/tickets/{ticketId}/comentarios
+ * GET    /api/v1/tickets/{ticketId}/comentarios
+ * POST   /api/v1/tickets/{ticketId}/adjuntos   (multipart, solo clientes)
+ * GET    /api/v1/tickets/{ticketId}/adjuntos
  * (ver endpoints-api-ticketdesk.md)
  */
 @RestController
@@ -35,7 +31,7 @@ import java.util.stream.Collectors;
 public class ComunicacionController {
 
     private final ComunicacionService comunicacionService;
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioActual usuarioActual;
 
     @PostMapping("/comentarios")
     public ResponseEntity<ComentarioResponse> crearComentario(
@@ -43,17 +39,18 @@ public class ComunicacionController {
             @Valid @RequestBody CrearComentarioRequest request,
             Authentication authentication
     ) {
-        Usuario usuario = obtenerUsuarioAutenticado(authentication);
-        Comentario comentario = comunicacionService.crearComentario(ticketId, request, usuario.getId());
-        return ResponseEntity.status(201).body(new ComentarioResponse(comentario));
+        Usuario autor = usuarioActual.obtener(authentication);
+        return ResponseEntity.status(201)
+                .body(new ComentarioResponse(comunicacionService.crearComentario(ticketId, request, autor)));
     }
 
     @GetMapping("/comentarios")
-    public ResponseEntity<List<ComentarioResponse>> listarComentarios(@PathVariable UUID ticketId) {
-        List<ComentarioResponse> respuesta = comunicacionService.listarComentarios(ticketId).stream()
+    public ResponseEntity<List<ComentarioResponse>> listarComentarios(
+            @PathVariable UUID ticketId, Authentication authentication) {
+        Usuario actor = usuarioActual.obtener(authentication);
+        return ResponseEntity.ok(comunicacionService.listarComentarios(ticketId, actor).stream()
                 .map(ComentarioResponse::new)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(respuesta);
+                .collect(Collectors.toList()));
     }
 
     @PostMapping(value = "/adjuntos", consumes = "multipart/form-data")
@@ -63,22 +60,17 @@ public class ComunicacionController {
             @RequestParam("archivo") MultipartFile archivo,
             Authentication authentication
     ) throws IOException {
-        Usuario usuario = obtenerUsuarioAutenticado(authentication);
-        Adjunto adjunto = comunicacionService.subirAdjunto(ticketId, comentarioId, archivo, usuario.getId());
-        return ResponseEntity.status(201).body(new AdjuntoResponse(adjunto));
+        Usuario autor = usuarioActual.obtener(authentication);
+        return ResponseEntity.status(201)
+                .body(new AdjuntoResponse(comunicacionService.subirAdjunto(ticketId, comentarioId, archivo, autor)));
     }
 
     @GetMapping("/adjuntos")
-    public ResponseEntity<List<AdjuntoResponse>> listarAdjuntos(@PathVariable UUID ticketId) {
-        List<AdjuntoResponse> respuesta = comunicacionService.listarAdjuntos(ticketId).stream()
+    public ResponseEntity<List<AdjuntoResponse>> listarAdjuntos(
+            @PathVariable UUID ticketId, Authentication authentication) {
+        Usuario actor = usuarioActual.obtener(authentication);
+        return ResponseEntity.ok(comunicacionService.listarAdjuntos(ticketId, actor).stream()
                 .map(AdjuntoResponse::new)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(respuesta);
-    }
-
-    private Usuario obtenerUsuarioAutenticado(Authentication authentication) {
-        CredencialUsuario credencial = CredencialUsuario.parsear(authentication.getName());
-        return usuarioRepository.findByEmpresaIdAndEmail(credencial.empresaId(), credencial.email())
-                .orElseThrow(() -> new NoSuchElementException("Usuario autenticado no encontrado"));
+                .collect(Collectors.toList()));
     }
 }

@@ -7,6 +7,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -34,7 +36,7 @@ public class ConfiguracionEmpresa {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "modulos_habilitados", columnDefinition = "jsonb")
-    private String modulosHabilitados; // ej: ["facturacion", "categorias_avanzadas"]
+    private List<String> modulosHabilitados = new ArrayList<>(); // ej: ["tickets", "voz", "facturacion"]
 
     @Column(name = "ventana_mantenimiento_inicio")
     private LocalTime ventanaMantenimientoInicio;

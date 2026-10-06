@@ -21,7 +21,9 @@ public class TicketResumenResponse {
     private final EstadoTicket estado;
     private final Prioridad prioridad;
     private final NivelAtencion nivelAtencion;
+    private final boolean reincidente;
     private final String categoria;
+    private final String clienteNombre;
     private final String agenteAsignado; // nombre, o null si no está asignado
     private final LocalDateTime fechaCreacion;
 
@@ -31,7 +33,9 @@ public class TicketResumenResponse {
         this.estado = ticket.getEstado();
         this.prioridad = ticket.getPrioridad();
         this.nivelAtencion = ticket.getNivelAtencion();
+        this.reincidente = ticket.isReincidente();
         this.categoria = ticket.getCategoria().getNombre();
+        this.clienteNombre = ticket.getUsuario().getNombre();
         this.agenteAsignado = ticket.getAgente() != null ? ticket.getAgente().getNombre() : null;
         this.fechaCreacion = ticket.getFechaCreacion();
     }

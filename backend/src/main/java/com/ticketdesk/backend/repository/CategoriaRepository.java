@@ -16,4 +16,8 @@ public interface CategoriaRepository extends JpaRepository<Categoria, UUID> {
      */
     @Query("SELECT c FROM Categoria c WHERE c.empresa IS NULL OR c.empresa.id = :empresaId")
     List<Categoria> findVisiblesParaEmpresa(@Param("empresaId") UUID empresaId);
+
+    boolean existsByEmpresaIdAndNombreIgnoreCase(UUID empresaId, String nombre);
+
+    boolean existsByEmpresaIsNullAndNombreIgnoreCase(String nombre);
 }
