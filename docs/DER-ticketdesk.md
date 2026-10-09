@@ -56,7 +56,7 @@ Corrección pedida por el tutor: el DER original solo permitía un rol fijo por 
 | rol | ENUM('ROLE_USER', 'ROLE_AGENT', 'ROLE_SUPERVISOR', 'ROLE_ADMIN') | Uno de los roles habilitados para ese usuario |
 | fecha_asignacion | TIMESTAMP | Cuándo se le asignó ese rol |
 
-**Restricción:** la combinación (`usuario_id`, `rol`) es única — un usuario no puede tener el mismo rol duplicado. Antes de asignar un rol nuevo, el backend verifica que no lo tenga ya ("checking de rol previo" pedido por el tutor), para dar un mensaje de error claro en vez de que falle silenciosamente por la restricción de la base de datos.
+**Restricción:** la combinación (`usuario_id`, `rol`) es única , un usuario no puede tener el mismo rol duplicado. Antes de asignar un rol nuevo, el backend verifica que no lo tenga ya ("checking de rol previo" pedido por el tutor), para dar un mensaje de error claro en vez de que falle silenciosamente por la restricción de la base de datos.
 
 ### `categorias`
 Categorías de tickets. Modelo híbrido: existe un catálogo genérico base (compartido por todas las empresas) y cada empresa puede sumar categorías propias, específicas de su rubro.
@@ -126,19 +126,24 @@ Fotos u otros archivos asociados a un ticket o comentario.
 | tipo | VARCHAR(50) | Tipo de archivo (imagen, etc.) |
 | fecha_subida | TIMESTAMP | Fecha de carga |
 
-### `ticket_history`
-Historial de cambios relevantes de cada ticket (trazabilidad completa: no solo cambios de estado, sino también reasignación de agente, cambio de categoría o de prioridad).
+### `historial_cambios`
+Corrección pedida por el tutor: reemplaza a la antigua "ticket_history", que solo podía trackear cambios de un Ticket. Esta tabla es **genérica**: registra cambios de cualquier entidad del sistema (Ticket, Usuario, Empresa, ConfiguracionEmpresa, etc.), con la estructura pedida: entidad / campo / valor anterior / valor nuevo.
+
+**Trade-off aceptado:** como `entidad_id` puede apuntar a distintas tablas según el valor de `entidad`, no puede ser una clave foránea tipada como antes (`ticket_id → tickets.id`). Se guarda como UUID simple, sin integridad referencial a nivel de base de datos para ese campo puntual. Se prioriza la generalidad pedida por sobre esa validación automática; la relación con `usuarios` (quién hizo el cambio) sí se mantiene como FK tipada, porque esa tabla es siempre la misma sin importar qué entidad cambió.
 
 | Campo | Tipo | Descripción |
 |---|---|---|
 | id | UUID / SERIAL (PK) | Identificador único |
-| ticket_id | FK → tickets.id | Ticket al que pertenece el cambio |
-| campo_modificado | ENUM('estado', 'agente_id', 'categoria_id', 'prioridad') | Qué campo del ticket cambió |
-| valor_anterior | VARCHAR(100) | Valor previo al cambio |
-| valor_nuevo | VARCHAR(100) | Valor posterior al cambio |
-| usuario_id | FK → usuarios.id | Quién hizo el cambio |
+| entidad | VARCHAR(100) | Nombre de la entidad afectada, ej: "Ticket", "Usuario", "Empresa" |
+| entidad_id | UUID | Id del registro específico que cambió, dentro de esa entidad |
+| campo_modificado | VARCHAR(100) | Nombre del campo que cambió (texto libre, no enum fijo: cada entidad tiene sus propios campos) |
+| valor_anterior | VARCHAR(255) | Valor previo al cambio |
+| valor_nuevo | VARCHAR(255) | Valor posterior al cambio |
+| usuario_id | FK → usuarios.id (nullable) | Quién hizo el cambio; nulo si fue automático (ej. TicketAutoCierreScheduler) |
 | motivo | TEXT (nullable) | Motivo del cambio, relevante en escalado, reasignación o reapertura |
 | fecha | TIMESTAMP | Fecha y hora exacta del cambio |
+
+**Ejemplo de uso para un Ticket:** `entidad = "Ticket"`, `entidad_id = <uuid del ticket>`, `campo_modificado = "estado"`, `valor_anterior = "EN_PROGRESO"`, `valor_nuevo = "ESCALADO"`.
 
 ---
 
@@ -152,7 +157,7 @@ empresas (1) ──── (1) configuracion_empresa
 usuarios (1) ────< (N) tickets            [como creador]
 usuarios (1) ────< (N) tickets            [como agente asignado]
 usuarios (1) ────< (N) comentarios
-usuarios (1) ────< (N) ticket_history     [quién hizo el cambio]
+usuarios (1) ────< (N) historial_cambios  [quién hizo el cambio; sin FK tipada tickets→historial_cambios, ver "entidad_id" arriba]
 usuarios (1) ────< (N) usuario_roles      [roles adicionales, incluye el principal]
 
 categorias (1) ────< (N) tickets          [genéricas o propias de una empresa, ver detalle arriba]
@@ -160,7 +165,7 @@ empresas (1) ────< (N) categorias         [categorías propias de esa em
 
 tickets (1) ────< (N) comentarios
 tickets (1) ────< (N) adjuntos
-tickets (1) ────< (N) ticket_history
+[tickets relacionado con historial_cambios vía entidad_id, sin FK tipada: ver nota arriba]
 
 comentarios (1) ────< (N) adjuntos        [opcional, si la foto va en un comentario]
 ```
@@ -174,7 +179,7 @@ comentarios (1) ────< (N) adjuntos        [opcional, si la foto va en un
 - **Multi-rol de usuario:** una misma persona puede tener más de un rol habilitado (ej. Agente y Supervisor a la vez), pensado para empresas grandes donde el personal cumple más de una función. `usuarios.rol` guarda el rol principal (usado por defecto en el login y el JWT); `usuario_roles` lista todos los roles habilitados, incluido el principal. Antes de sumar un rol nuevo se verifica que no esté ya asignado.
 - **Categorías híbridas (genéricas + propias):** cada empresa puede sumar categorías propias a un catálogo genérico base compartido por todo el sistema. Esto da flexibilidad real por rubro (cada empresa adapta el catálogo a su negocio) sin perder del todo la comparabilidad entre empresas, ya que el catálogo genérico sigue existiendo como base común para reportes generales.
 - **Fotos/adjuntos:** solo se guarda la URL (Cloudinary u otro servicio), nunca el archivo binario en la base de datos.
-- **Escalado y supervisión:** cuando un ticket pasa a estado `escalado`, se reasigna (campo `agente_id`) a un usuario con rol `ROLE_SUPERVISOR` en lugar de otro `ROLE_AGENT` común. Esto queda registrado en `ticket_history` como un cambio de `agente_id`, con el motivo "escalado" explicitado.
+- **Escalado y supervisión:** cuando un ticket pasa a estado `escalado`, se reasigna (campo `agente_id`) a un usuario con rol `ROLE_SUPERVISOR` en lugar de otro `ROLE_AGENT` común. Esto queda registrado en `historial_cambios` (entidad="Ticket") como un cambio de `agente_id`, con el motivo "escalado" explicitado.
 - **Prioridad vs. Nivel de Atención:** son dos campos deliberadamente independientes. `prioridad` es la urgencia que percibe el cliente al crear el ticket; `nivel_atencion` es la clasificación técnica interna (NIVEL_1 a CRITICO) que define a qué nivel de soporte corresponde y su tiempo objetivo de resolución (SLA básico: 24hs / 48hs / 72hs / 4hs respectivamente). Mezclar ambos conceptos en un solo campo generaría el riesgo de que el sistema le "baje" la urgencia percibida al cliente, lo cual podría llevarlo a cerrar el ticket sin que el problema esté realmente resuelto.
 - **Rebote por estancamiento:** un ticket que llega a `CRITICO` (el nivel más alto) y queda sin avances por más de 5 días vuelve a `NIVEL_1`, marcado como `reincidente`, para que el equipo lo retome desde cero con la alerta de que ya falló una vez en el nivel de máxima urgencia. Implementado como tarea programada (`TicketAutoCierreScheduler`).
 - **Trazabilidad de creación por voz:** siguiendo el mismo criterio que con las fotos de agentes, el sistema guarda tanto el audio original como su transcripción textual. Esto permite auditar si la categorización automática por palabras clave fue correcta, sin depender únicamente de la interpretación del sistema de reconocimiento de voz.
@@ -186,7 +191,7 @@ comentarios (1) ────< (N) adjuntos        [opcional, si la foto va en un
 
 **Enfoque adoptado: PostgreSQL relacional + columnas JSONB para configuración flexible.**
 
-Todas las entidades del núcleo del negocio (`empresas`, `usuarios`, `tickets`, `comentarios`, `categorias`, `adjuntos`, `ticket_history`) se implementan como tablas relacionales tradicionales en PostgreSQL, dado que sus relaciones son estables y requieren integridad referencial (claves foráneas, transacciones).
+Todas las entidades del núcleo del negocio (`empresas`, `usuarios`, `tickets`, `comentarios`, `categorias`, `adjuntos`, `historial_cambios`) se implementan como tablas relacionales tradicionales en PostgreSQL, dado que sus relaciones son estables y requieren integridad referencial (claves foráneas, transacciones).
 
 El campo `configuracion_empresa.modulos_habilitados` se implementa como columna `JSONB` dentro de PostgreSQL (no como una base NoSQL separada). Esto permite:
 

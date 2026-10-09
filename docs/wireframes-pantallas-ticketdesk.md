@@ -241,3 +241,19 @@ Al intentar desactivar con tickets activos:
 | Gestión de Agentes | Flujo 7 |
 
 Todas las pantallas necesarias para cubrir los flujos documentados están contempladas. El diseño visual definitivo (colores, tipografías, componentes) se desarrollará durante la etapa de implementación del frontend.
+
+---
+
+## Cambios entre el diseño original y la implementación final
+
+Los wireframes anteriores son el diseño inicial. Al implementar el frontend se ajustaron los siguientes puntos, que reflejan lo que efectivamente funciona en la aplicación:
+
+1. **Login (pantalla 1):** se agregó el selector de **Empresa**, porque el login requiere email, contraseña y `empresaId` (regla RN1, el email es único por empresa). El registro de clientes se hace en la misma pantalla.
+2. **Nuevo ticket por formulario (pantalla 3):** las fotos no se adjuntan en el formulario sino desde el detalle del ticket, una vez creado. El botón se llama "Crear ticket".
+3. **Nuevo ticket por voz (pantalla 4):** la grabación y la transcripción en vivo ocurren en la misma pantalla. Al terminar se muestran el audio grabado, el texto editable, la categoría sugerida (editable) y la prioridad, con los botones "Crear ticket" y "Grabar de nuevo".
+4. **Detalle de ticket (pantallas 5 y 7):** se agregó el **recorrido de estados** de cinco pasos. Para el personal de soporte se suman la barra de **tiempo objetivo (SLA)** y el **historial de cambios**. Los tickets se identifican por título y fecha, no por número.
+5. **Detalle de ticket, vista agente (pantalla 7):** en lugar de un selector de estado, se muestran solo los botones de las acciones válidas según el estado actual (Tomar este ticket, Empezar a trabajar, Pedir información al cliente, Escalar a un supervisor, Marcar como resuelto, Retomar). El motivo es obligatorio únicamente al escalar. Los supervisores ven además un selector "Asignar a".
+6. **Detalle de ticket, vista cliente (pantalla 5):** cuando el ticket está resuelto aparecen los botones "Sí, cerrar el ticket" y "El problema continúa".
+7. **Panel de agente (pantalla 6):** además de estado, prioridad y nivel, se puede filtrar por categoría y por "Solo los míos". El contador muestra la cantidad de tickets de la búsqueda.
+8. **Gestión de agentes (pantalla 9):** se implementó como la pestaña **Usuarios** del panel de administración, con las acciones de sumar un rol, activar y desactivar. Si el agente tiene tickets abiertos, el sistema rechaza la baja con un mensaje que indica cuántos son, y la reasignación se hace desde cada ticket. El botón "Reasignar todos y desactivar" queda como mejora futura.
+9. **Panel de administración (pantalla 8):** además de la configuración de módulos y la ventana de mantenimiento, incluye las pestañas **Categorías** (alta de categorías propias de la empresa) y **Usuarios**.
