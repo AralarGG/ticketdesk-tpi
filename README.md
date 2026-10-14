@@ -7,6 +7,8 @@
 - Ezequiel Sanabria
 - Joaquín Del Valle Lietti
 
+**Nota:** el desarrollo del sistema (backend, frontend, base de datos y documentación) estuvo a cargo de Santiago Raúl Salinas.
+
 **Tutor/a:** Gerardo Adrian Herrera
 
 ---
@@ -45,20 +47,21 @@ Para las organizaciones modernas, la calidad del servicio de soporte define la r
 **Roles de usuario:**
 - **Usuario/Cliente:** crea tickets, visualiza el estado de sus propios tickets y puede agregar comentarios o información adicional
 - **Agente de soporte:** visualiza todos los tickets, puede tomarlos, reasignarlos, cambiar su estado y responder al usuario
-- **Administrador (opcional según tiempo disponible):** gestiona categorías, prioridades y usuarios/agentes del sistema
+- **Supervisor:** recibe los tickets escalados por los agentes y puede asignar tickets a otras personas del equipo
+- **Administrador:** gestiona la configuración de su empresa (módulos habilitados y ventana de mantenimiento), las categorías propias y los usuarios, con sus roles
 
 **Funcionalidades principales:**
 
 | Funcionalidad | Descripción |
 |---|---|
 | Alta de ticket | El usuario completa título, descripción, categoría (ej. bug, consulta, facturación) y prioridad (baja/media/alta). También puede crearse por voz (ver sección "Apertura de Tickets por Voz") |
-| Asignación | Un agente toma el ticket manualmente, o se asigna automáticamente por categoría |
+| Asignación | Un agente toma el ticket manualmente y un supervisor puede asignarlo a otra persona. Al escalar, el sistema lo reasigna automáticamente a un supervisor |
 | Seguimiento de estado | Flujo ampliado pensado para un caso de uso real (ver "Flujo de Estados del Ticket"), con historial de cambios y fecha de cada transición |
 | Comentarios | Usuario y agente pueden agregar comentarios dentro del ticket para dar contexto o pedir información |
 | Adjuntos | El usuario puede adjuntar fotos a un ticket o comentario; los agentes responden únicamente con texto (ver justificación en "Reglas de Negocio") |
 | Panel de agente | Listado filtrable por estado, prioridad, categoría y agente asignado |
 | Panel de usuario | Vista simplificada con solo los tickets propios y su estado actual |
-| Autenticación | Login diferenciado por rol (usuario/agente), con rutas protegidas según permisos |
+| Autenticación | Login por empresa y email con JWT, con cuatro roles (cliente, agente, supervisor, administrador) y rutas protegidas según permisos |
 
 **Fuera de alcance (para esta primera versión):**
 - Notificaciones automáticas por email o push
@@ -134,7 +137,7 @@ Cada transición (incluyendo reasignación de agente, cambio de categoría o pri
 
 ## Apertura de Tickets por Voz (Voice Speaker)
 
-Como funcionalidad diferencial del producto, el sistema permite que un usuario abra un ticket mediante un **mensaje de voz**, en lugar de completar el formulario manualmente. El sistema reconoce palabras clave dentro del audio (por ejemplo: "no funciona", "error de pago", "no puedo iniciar sesión") para autocompletar categoría y descripción inicial del ticket, mediante una API de reconocimiento de voz a texto (speech-to-text).
+Como funcionalidad diferencial del producto, el sistema permite que un usuario abra un ticket mediante un **mensaje de voz**, en lugar de completar el formulario manualmente. La transcripción se realiza en el navegador del usuario (Web Speech API) mientras habla; el backend busca palabras clave en el texto (por ejemplo: "no funciona", "error de pago", "no puedo iniciar sesión") para sugerir la categoría y el título, y el usuario los confirma o corrige antes de crear el ticket. Funciona mejor en Chrome o Edge.
 
 Se guarda tanto el **audio original** como su **transcripción textual**, para poder auditar si la categorización automática fue correcta y no depender únicamente de la interpretación del sistema de reconocimiento de voz.
 
@@ -204,6 +207,59 @@ Toda la documentación de diseño está en `/docs`:
 - [`plan-desarrollo-ticketdesk.md`](./docs/plan-desarrollo-ticketdesk.md): plan de desarrollo técnico por etapas
 - [`listado-modulos-ticketdesk.md`](./docs/listado-modulos-ticketdesk.md): definición de módulos y requerimientos funcionales/no funcionales del sistema
 - [`reglas-negocio-ticketdesk.md`](./docs/reglas-negocio-ticketdesk.md): las 18 reglas de negocio del sistema, con su justificación y dónde están implementadas
+- [`schema.sql`](./docs/schema.sql): script SQL con el esquema completo de la base de datos
+- [`despliegue-ticketdesk.md`](./docs/despliegue-ticketdesk.md): guía de despliegue en la nube (Vercel, Render y Supabase), variables de entorno y limitaciones del plan gratuito
+- [`pruebas-ticketdesk.md`](./docs/pruebas-ticketdesk.md): casos de prueba ejecutados y sus resultados
+- [`smoke-test.ps1`](./docs/smoke-test.ps1): script de PowerShell que verifica automáticamente el sistema desplegado
+- [`informe-final-ticketdesk.md`](./docs/informe-final-ticketdesk.md): informe final del proyecto
+
+## Instalación y Ejecución Local
+
+### Requisitos
+- Java 21 y Maven 3.9 o superior (IntelliJ IDEA ya incluye Maven)
+- PostgreSQL 14 o superior
+- Node.js 20 o superior
+- Una cuenta gratuita en [Cloudinary](https://cloudinary.com), donde se guardan las fotos y los audios
+
+### 1. Clonar el repositorio
+```
+git clone https://github.com/AralarGG/ticketdesk-tpi.git
+cd ticketdesk-tpi
+```
+
+### 2. Crear la base de datos
+En PostgreSQL, crear una base vacía:
+```
+CREATE DATABASE ticketdesk;
+```
+Las tablas las crea el backend al iniciar. El archivo [`docs/schema.sql`](./docs/schema.sql) contiene el esquema completo, por si se prefiere crearlo a mano.
+Por defecto se usa el usuario `postgres` con contraseña `postgres`; se cambian en `backend/src/main/resources/application.properties`.
+
+### 3. Iniciar el backend
+Definir las credenciales de Cloudinary como variables de entorno (se encuentran en el panel Dashboard de Cloudinary): `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET`. Luego:
+```
+cd backend
+mvn spring-boot:run
+```
+La API queda en `http://localhost:8080`. En el primer arranque se cargan datos de prueba (propiedad `app.seed.enabled`).
+
+### 4. Iniciar el frontend
+```
+cd frontend
+npm install
+npm run dev
+```
+La aplicación queda en `http://localhost:5173`. Si el backend está en otra dirección, copiar `.env.example` a `.env` y cambiar `VITE_API_URL`.
+
+### Usuarios de prueba
+Empresa "Empresa Demo", contraseña `Demo1234!` para todos:
+
+| Email | Rol |
+|---|---|
+| cliente@demo.com | Cliente |
+| agente@demo.com | Agente |
+| supervisor@demo.com | Supervisor y Agente |
+| admin@demo.com | Administrador |
 
 ## Estructura del Repositorio
 
@@ -217,7 +273,7 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
 
 ## Estado del Proyecto
 
-🟡 En desarrollo: Entrega 3: Arquitectura, Módulos y Reglas de Negocio (correcciones del tutor incorporadas: email único por empresa, categorías híbridas, multi-rol de usuario, historial de cambios generalizado, SLA con nivel Crítico)
+🟡 En desarrollo: backend y frontend completos y probados de punta a punta; pendientes el despliegue en la nube, el informe final y el video. Entrega 3: Arquitectura, Módulos y Reglas de Negocio (correcciones del tutor incorporadas: email único por empresa, categorías híbridas, multi-rol de usuario, historial de cambios generalizado, SLA con nivel Crítico)
 
 ## Roadmap
 
@@ -227,7 +283,7 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
   - [x] Definición de arquitectura de seguridad y roles (JWT)
   - [x] Especificación de endpoints y contratos de la API REST
 - [x] Desarrollo del backend (API REST): autenticación (JWT), tickets con máquina de estados, comentarios y adjuntos, categorías, usuarios y roles, configuración por empresa, ventana de mantenimiento y canal de voz
-- [ ] Desarrollo del frontend
+- [x] Desarrollo del frontend (React + TypeScript): login por empresa, paneles de cliente, agente y administración, alta de tickets por formulario y por voz
 - [ ] Despliegue en la nube
 - [ ] Informe final y video explicativo
 - [ ] Defensa oral
