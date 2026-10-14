@@ -213,6 +213,20 @@ Toda la documentación de diseño está en `/docs`:
 - [`smoke-test.ps1`](./docs/smoke-test.ps1): script de PowerShell que verifica automáticamente el sistema desplegado
 - [`informe-final-ticketdesk.md`](./docs/informe-final-ticketdesk.md): informe final del proyecto
 
+## Aplicación en Línea
+
+El sistema está desplegado y se puede probar sin instalar nada:
+
+| Componente | Servicio | Dirección |
+|---|---|---|
+| Aplicación web (frontend) | Vercel | https://ticketdesk-tpi.vercel.app |
+| API (backend) | Render | https://ticketdesk-backend-1ech.onrender.com |
+| Base de datos | Supabase (PostgreSQL) | no pública |
+
+Para ingresar, elegir la empresa "Empresa Demo" y usar alguno de los usuarios de prueba que figuran más abajo.
+
+**Importante:** el servidor usa el plan gratuito de Render, que se suspende tras 15 minutos sin uso. La primera vez que se abre la aplicación después de una pausa puede tardar entre 2 y 3 minutos en responder; hay que esperar y recargar la página. Los detalles del despliegue están en [`docs/despliegue-ticketdesk.md`](./docs/despliegue-ticketdesk.md).
+
 ## Instalación y Ejecución Local
 
 ### Requisitos
@@ -273,7 +287,7 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
 
 ## Estado del Proyecto
 
-🟡 En desarrollo: backend y frontend completos y probados de punta a punta; pendientes el despliegue en la nube, el informe final y el video. Entrega 3: Arquitectura, Módulos y Reglas de Negocio (correcciones del tutor incorporadas: email único por empresa, categorías híbridas, multi-rol de usuario, historial de cambios generalizado, SLA con nivel Crítico)
+🟢 Backend y frontend completos, probados de punta a punta y desplegados en la nube; pendientes el informe final y el video. Entrega 3: Arquitectura, Módulos y Reglas de Negocio (correcciones del tutor incorporadas: email único por empresa, categorías híbridas, multi-rol de usuario, historial de cambios generalizado, SLA con nivel Crítico)
 
 ## Roadmap
 
@@ -284,7 +298,7 @@ Todo el desarrollo se centraliza en este único repositorio, según lo requerido
   - [x] Especificación de endpoints y contratos de la API REST
 - [x] Desarrollo del backend (API REST): autenticación (JWT), tickets con máquina de estados, comentarios y adjuntos, categorías, usuarios y roles, configuración por empresa, ventana de mantenimiento y canal de voz
 - [x] Desarrollo del frontend (React + TypeScript): login por empresa, paneles de cliente, agente y administración, alta de tickets por formulario y por voz
-- [ ] Despliegue en la nube
+- [x] Despliegue en la nube (Vercel, Render y Supabase)
 - [ ] Informe final y video explicativo
 - [ ] Defensa oral
 
