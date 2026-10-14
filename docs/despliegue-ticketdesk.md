@@ -2,7 +2,7 @@
 
 ## Documento base: Trabajo Final Integrador UTN TUPaD
 
-Este documento describe cómo se despliega TicketDesk en servicios online gratuitos, qué decisiones se tomaron y qué limitaciones hay que conocer. Las condiciones de los planes gratuitos se verificaron el 9 de octubre de 2026 y pueden cambiar.
+Este documento describe cómo se despliega TicketDesk en servicios online gratuitos, qué decisiones se tomaron y qué limitaciones hay que conocer. Las condiciones de los planes gratuitos se verificaron el 9 de octubre de 2026 y pueden cambiar. El despliegue se realizó el 14 de octubre de 2026 siguiendo esta guía, y los problemas que surgieron quedaron incorporados en las secciones 6 y 9.
 
 ---
 
@@ -36,7 +36,7 @@ El requisito de la cátedra pide al menos un componente online. En este proyecto
 
 | Limitación | Efecto | Qué hacer |
 |---|---|---|
-| El servicio de Render se duerme tras 15 minutos sin tráfico | La primera consulta después de una pausa tarda cerca de un minuto en responder | Abrir la aplicación unos minutos antes de una demostración o defensa |
+| El servicio de Render se duerme tras 15 minutos sin tráfico | La primera consulta después de una pausa tarda entre 2 y 3 minutos, porque el arranque de la aplicación demora cerca de 2 minutos con el procesador reducido del plan gratuito | Abrir la aplicación unos minutos antes de una demostración o defensa |
 | Render ofrece 750 horas gratuitas por mes y por workspace | Alcanzan para tener un servicio encendido todo el mes | Mantener un único servicio gratuito |
 | Los proyectos gratuitos de Supabase se pausan tras una semana sin actividad | La base queda inactiva hasta restaurarla a mano desde el panel | Entrar a la aplicación al menos una vez por semana, o restaurar el proyecto desde el panel de Supabase |
 | La base de Supabase gratuita tiene 500 MB | Sobra para el volumen de este proyecto | Sin acción |
@@ -57,13 +57,19 @@ Se cargan en el panel de Render (sección Environment). Ningún valor secreto es
 | `CLOUDINARY_CLOUD_NAME` | nombre de la nube | Panel de Cloudinary |
 | `CLOUDINARY_API_KEY` | clave de la API | Panel de Cloudinary |
 | `CLOUDINARY_API_SECRET` | secreto de la API | Panel de Cloudinary |
-| `JWT_SECRET` | cadena aleatoria de 64 caracteres o más | Firma de los tokens. Distinta a la de desarrollo |
+| `JWT_SECRET` | cadena aleatoria larga (el comando de más abajo genera 62 caracteres) | Firma de los tokens. Distinta a la de desarrollo |
 | `APP_CORS_ALLOWED_ORIGINS` | `https://URL-DEL-FRONTEND.vercel.app` | Orígenes autorizados a llamar a la API. Varios se separan con coma |
 | `APP_SEED_ENABLED` | `true` o `false` | Con `true` se cargan los datos de prueba si la base está vacía |
 | `APP_SEED_PASSWORD` | contraseña de los usuarios de prueba | Opcional. Por defecto `Demo1234!` |
 | `SPRING_JPA_SHOW_SQL` | `false` | Evita llenar los registros con consultas SQL |
 
 Render define por su cuenta la variable `PORT`, y `application.properties` la usa con `server.port=${PORT:8080}`.
+
+**Precauciones al cargar las variables:**
+
+- Los valores se escriben sin comillas y sin espacios al principio ni al final.
+- La opción **Add from .env** de Render interpreta el símbolo `#` como el comienzo de un comentario y corta el valor en ese punto. Una contraseña que lo contenga se guarda incompleta y la base la rechaza. Por eso las contraseñas deben tener solo letras y números, o cargarse a mano en el campo de cada variable.
+- La URL de la base no lleva usuario ni contraseña: van en `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD`.
 
 Para generar un valor de `JWT_SECRET` en PowerShell:
 
@@ -87,15 +93,16 @@ El archivo `frontend/vercel.json` redirige todas las rutas a `index.html`, para 
 
 1. Crear una cuenta en supabase.com y un proyecto nuevo llamado `ticketdesk`.
 2. Definir una contraseña para la base, sin caracteres especiales, y guardarla.
-3. Elegir la región más cercana a la del backend (por ejemplo East US, North Virginia).
+3. Elegir la región. En este despliegue el proyecto quedó en Canadá (Central) y el backend en Virginia, la región de Render más cercana.
+   Al crear el proyecto se desactivó la opción **Enable Data API**, porque el backend se conecta directo a la base y no usa la API web de Supabase.
 4. Con el proyecto creado, abrir el botón **Connect**, elegir **Session pooler** y la pestaña **JDBC**. De ahí se obtienen el host del pooler y el usuario (`postgres.REFERENCIA`).
 
 ### 6.2 Backend (Render)
 
 1. Crear una cuenta en render.com e iniciar sesión con GitHub.
 2. **New**, **Web Service**, y elegir el repositorio `ticketdesk-tpi`.
-3. Completar: Name `ticketdesk-backend`, Region cercana a la base (Virginia u Ohio), Root Directory `backend`, Runtime `Docker`, Instance Type `Free`.
-4. En **Advanced**, cargar las variables de la sección 4 (por ahora `APP_CORS_ALLOWED_ORIGINS` con un valor provisorio) y definir Health Check Path `/api/v1/auth/empresas`.
+3. Completar: Name `ticketdesk-backend`, Region cercana a la base (Virginia u Ohio), Runtime `Docker`, Instance Type `Free` y **Root Directory vacío**. Al conectar GitHub, dar acceso solo al repositorio `ticketdesk-tpi`.
+4. En **Advanced**, definir Docker Build Context Directory `backend`, Dockerfile Path `backend/Dockerfile` y Health Check Path `/api/v1/auth/empresas`. En **Environment Variables**, cargar las variables de la sección 4 (por ahora `APP_CORS_ALLOWED_ORIGINS` con un valor provisorio). Antes de crear el servicio, verificar que el plan elegido sea Free.
 5. Crear el servicio. La primera compilación tarda varios minutos.
 6. Cuando esté en estado **Live**, abrir `https://URL-DEL-BACKEND.onrender.com/api/v1/auth/empresas`. Debe mostrar la lista de empresas en JSON.
 
@@ -144,6 +151,9 @@ El archivo `frontend/vercel.json` redirige todas las rutas a `index.html`, para 
 | Recargar una pantalla interna da 404 | Falta `vercel.json` | Agregarlo en la carpeta `frontend` |
 | La primera consulta tarda mucho | El servicio de Render estaba dormido | Esperar alrededor de un minuto |
 | Todo falla de golpe tras una semana sin uso | Supabase pausó el proyecto | Restaurarlo desde el panel de Supabase |
+| El registro dice `password authentication failed` aunque la contraseña parece correcta | La contraseña contiene un `#` y Render la cortó al cargarla con Add from .env | Volver a escribirla completa a mano en el campo de la variable, o usar una contraseña solo con letras y números |
+| Durante el arranque el registro repite `No open ports detected` | El backend todavía no terminó de iniciar | Es normal con el plan gratuito. Esperar hasta que el servicio figure como Live |
+| Render muestra el servicio creado pero sin ningún deploy | La página se recargó mientras se creaba el servicio | Revisar Settings y lanzar el deploy con Manual Deploy, Deploy latest commit |
 
 ## 10. Registro del despliegue
 
@@ -151,8 +161,8 @@ Esta tabla se completa al desplegar.
 
 | Dato | Valor |
 |---|---|
-| Fecha del despliegue | |
-| URL del frontend | |
-| URL del backend | |
-| Proyecto de Supabase | |
-| Observaciones | |
+| Fecha del despliegue | 14 de octubre de 2026 |
+| URL del frontend | https://ticketdesk-tpi.vercel.app |
+| URL del backend | https://ticketdesk-backend-1ech.onrender.com |
+| Proyecto de Supabase | `ticketdesk`, región Canadá (Central) |
+| Observaciones | 25 pruebas automáticas aprobadas sobre el sistema desplegado. El arranque en frío del backend demora entre 2 y 3 minutos |

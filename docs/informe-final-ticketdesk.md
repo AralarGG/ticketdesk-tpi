@@ -5,7 +5,7 @@
 **Autor:** Santiago Raúl Salinas
 **Tutor:** Gerardo Adrian Herrera
 **Repositorio:** https://github.com/AralarGG/ticketdesk-tpi
-**Aplicación en línea:** [COMPLETAR: URL del frontend desplegado]
+**Aplicación en línea:** https://ticketdesk-tpi.vercel.app
 
 ---
 
@@ -210,7 +210,7 @@ Cada cambio relevante de un ticket (estado, agente, nivel de atención) genera u
 
 ## 15. Pruebas
 
-Se probó de punta a punta tanto la API (mediante peticiones directas) como la aplicación web (a mano, con los roles de cliente, agente y administrador, y verificando que el supervisor recibe los tickets escalados). El detalle de los casos y los resultados está en `docs/pruebas-ticketdesk.md`. Se verificaron, entre otros: el ciclo completo de un ticket, las restricciones por rol (403), el aislamiento entre empresas (404), el rechazo del escalado sin motivo (400), la imposibilidad de que el agente cierre un ticket (409), la subida de fotos y audios a Cloudinary, la creación por voz, la ventana de mantenimiento (503) y la gestión de usuarios.
+Se probó de punta a punta tanto la API (mediante peticiones directas) como la aplicación web (a mano, con los roles de cliente, agente, supervisor y administrador). Una vez desplegado el sistema, se repitió una batería automática de 25 pruebas sobre la dirección pública, con todos los casos aprobados, y se verificaron a mano la creación de tickets por voz, la subida de fotos y la asignación por parte de un supervisor. El detalle de los casos y los resultados está en `docs/pruebas-ticketdesk.md`. Se verificaron, entre otros: el ciclo completo de un ticket, las restricciones por rol (403), el aislamiento entre empresas (404), el rechazo del escalado sin motivo (400), la imposibilidad de que el agente cierre un ticket (409), la subida de fotos y audios a Cloudinary, la creación por voz, la ventana de mantenimiento (503) y la gestión de usuarios.
 
 Durante las pruebas se detectaron y corrigieron defectos de usabilidad, como avisos de error que aparecían lejos del botón que los originaba y textos de ayuda que se prestaban a confusión.
 
@@ -220,11 +220,11 @@ El sistema se despliega con el frontend en Vercel, el backend en Render (con Doc
 
 | Dato | Valor |
 |---|---|
-| Frontend | [COMPLETAR: URL] |
-| Backend | [COMPLETAR: URL] |
-| Fecha de despliegue | [COMPLETAR] |
+| Frontend | https://ticketdesk-tpi.vercel.app |
+| Backend | https://ticketdesk-backend-1ech.onrender.com |
+| Fecha de despliegue | 14 de octubre de 2026 |
 
-Los planes gratuitos tienen dos limitaciones que conviene conocer: el backend se duerme tras 15 minutos sin tráfico y tarda cerca de un minuto en responder la primera petición, y el proyecto de la base de datos se pausa tras una semana sin actividad.
+Los planes gratuitos tienen dos limitaciones que conviene conocer: el backend se duerme tras 15 minutos sin tráfico y tarda entre 2 y 3 minutos en responder la primera petición, y el proyecto de la base de datos se pausa tras una semana sin actividad.
 
 ## 17. Dificultades y decisiones
 
@@ -232,6 +232,8 @@ Los planes gratuitos tienen dos limitaciones que conviene conocer: el backend se
 - **No exponer datos sensibles.** Una entidad devuelta directamente por la API incluía el hash de la contraseña. Se adoptó una regla estricta: la API responde solo con DTOs.
 - **Pasar de un equipo de tres a un desarrollo individual.** Se ajustó el plan y la documentación, y se priorizó tener un sistema completo y probado de punta a punta antes que sumar funciones.
 - **Mantener la documentación alineada con el código.** Al revisar los documentos contra la implementación final se encontraron diferencias (por ejemplo, el modelo de datos del repositorio conservaba la tabla anterior de historial) y se corrigieron.
+
+- **Cargar contraseñas con caracteres especiales en variables de entorno.** Una contraseña de base de datos con el símbolo `#` se cortó al cargarla con el formato de archivo `.env`, que lo interpreta como un comentario, y la base la rechazó. Se resolvió volviendo a cargarla a mano, y la advertencia quedó documentada en la guía de despliegue.
 
 ## 18. Limitaciones y trabajo futuro
 

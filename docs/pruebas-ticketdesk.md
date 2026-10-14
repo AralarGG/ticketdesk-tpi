@@ -70,19 +70,58 @@ Este documento registra las pruebas ejecutadas sobre el sistema y sus resultados
 | D5 | El modelo de datos publicado en el repositorio conservaba la tabla anterior de historial | Se reemplazó por la versión alineada con el código |
 | D6 | Varios documentos describían comportamientos previos al código final | Se revisaron y actualizaron contra la implementación |
 
-## 4. Pruebas pendientes tras el despliegue
+## 4. Pruebas del sistema desplegado
 
-Una vez desplegado el sistema se repiten en el entorno en línea los casos principales: inicio de sesión de los cuatro roles, ciclo completo de un ticket, creación por voz, subida de una foto, escalado y panel de administración. Los resultados se registran en esta sección.
+**Fecha de ejecución:** 14 de octubre de 2026
+**Entorno:** frontend en Vercel, backend en Render, base de datos en Supabase y archivos en Cloudinary.
 
-| Caso | Resultado | Fecha |
+### 4.1 Verificación automática
+
+Se ejecutó el script `docs/smoke-test.ps1` contra la dirección pública del backend. El script inicia sesión con los cuatro roles y recorre los casos principales. **Resultado: 25 pruebas aprobadas y 0 con fallo.**
+
+| N° | Caso verificado | Resultado |
 |---|---|---|
-| Inicio de sesión de cada rol | [COMPLETAR] | |
-| Ciclo completo de un ticket | [COMPLETAR] | |
-| Creación por voz | [COMPLETAR] | |
-| Subida de una foto | [COMPLETAR] | |
-| Escalado con motivo | [COMPLETAR] | |
-| Panel de administración | [COMPLETAR] | |
+| D1 | Inicio de sesión como cliente, agente, supervisor y administrador | Aprobado |
+| D2 | Hay al menos 5 categorías visibles | Aprobado |
+| D3 | El ticket nace en estado nuevo, Nivel 1 | Aprobado |
+| D4 | El agente toma el ticket (asignado) | Aprobado |
+| D5 | Pasa a en progreso | Aprobado |
+| D6 | Pasa a resuelto | Aprobado |
+| D7 | El agente no puede cerrar el ticket (409) | Aprobado |
+| D8 | El cliente confirma el cierre (cerrado) | Aprobado |
+| D9 | El cliente no puede cambiar el nivel de atención (403) | Aprobado |
+| D10 | El cliente no puede ver el historial (403) | Aprobado |
+| D11 | El historial registra al menos 5 cambios | Aprobado |
+| D12 | El supervisor asigna el ticket a un agente | Aprobado |
+| D13 | Escalar sin motivo devuelve error (400) | Aprobado |
+| D14 | Escalar con motivo: escalado, Nivel 2 | Aprobado |
+| D15 | El ticket escalado se reasigna a otra persona (supervisor) | Aprobado |
+| D16 | El agente no puede subir fotos (403) | Aprobado |
+| D17 | El cliente sube una foto a Cloudinary (201) | Aprobado |
+| D18 | La sugerencia por voz propone la categoría Facturación | Aprobado |
+| D19 | Se crea un ticket por voz con audio (201) | Aprobado |
+| D20 | El administrador lee la configuración de la empresa | Aprobado |
+| D21 | El administrador lista los usuarios | Aprobado |
+| D22 | El cliente no puede listar usuarios (403) | Aprobado |
+
+La fila D1 agrupa los cuatro inicios de sesión (uno por rol) y cada una de las otras 21 filas es una verificación individual, lo que da 25 en total.
+
+### 4.2 Pruebas manuales en el navegador
+
+| N° | Rol | Caso | Resultado esperado | Resultado |
+|---|---|---|---|---|
+| M1 | Cliente | Iniciar sesión desde la dirección pública | Ingresa a su panel y ve sus tickets | Aprobado |
+| M2 | Cliente | Crear un ticket por voz con el micrófono | Transcripción en vivo, ticket con la etiqueta de voz y audio que se reproduce | Aprobado |
+| M3 | Cliente | Subir una foto a un ticket | Aparece en la sección Fotos | Aprobado |
+| M4 | Supervisor | Asignar un ticket a un agente desde el selector | Estado asignado, agente actualizado y dos registros nuevos en el historial | Aprobado |
+| M5 | Cliente y personal | Verificar la hora de los tickets | Coincide con la hora de Argentina | Aprobado |
+| M6 | Administrador | Recorrer las pestañas de configuración, categorías y usuarios | Las tres pestañas cargan sus datos | [COMPLETAR] |
+
+### 4.3 Observaciones del despliegue
+
+- La primera consulta tras un período sin uso tarda entre 2 y 3 minutos, porque el plan gratuito del servidor se suspende por inactividad y el arranque de la aplicación demora cerca de 2 minutos.
+- Una contraseña de base de datos con el símbolo `#` se cortó al cargarla con la opción Add from .env de Render, lo que produjo un error de autenticación. Se resolvió volviendo a cargarla a mano. Quedó documentado en la guía de despliegue.
 
 ## 5. Alcance de las pruebas
 
-Las pruebas fueron manuales y funcionales. No se desarrollaron pruebas automatizadas, lo que se registra como una mejora futura. No se probaron en tiempo real el cierre automático a las 72 horas (el planificador se ejecuta al iniciar el servidor y luego cada hora) ni la asignación de un ticket a otra persona desde la sesión de un supervisor.
+Las pruebas fueron manuales y funcionales. No se desarrollaron pruebas automatizadas del código, lo que se registra como una mejora futura: el script de verificación recorre el sistema desde afuera, pero no reemplaza a las pruebas unitarias. No se probó en tiempo real el cierre automático a las 72 horas: el planificador se ejecuta al iniciar el servidor y luego cada hora.
