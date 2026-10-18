@@ -80,7 +80,73 @@ Este documento reúne en un solo lugar todas las reglas de negocio del sistema, 
 
 **SLA por nivel:** Nivel 1 = 24hs, Nivel 2 = 48hs, Nivel 3 = 72hs, Crítico = 4hs.
 
-**Implementado en:** `Prioridad.java`, `NivelAtencion.java` (con `horasObjetivoResolucion` por nivel).
+**Implementado en:** `Prioridad.java`, `NivelAtencion.java` (con `horasObjetivoResolucion` por nivel), `TicketService.cambiarNivel()` y `TicketAutoCierreScheduler.rebotarPorEstancamientoEnNivelMaximo()`.
+
+### Transiciones del nivel de atención (ampliación de RN8)
+
+Esta sección explica cómo se llega a cada nivel de atención, quién puede cambiarlo y qué ocurre después. Responde en especial a la pregunta sobre el nivel Crítico.
+
+**Cómo se llega a cada nivel**
+
+| Nivel | Cómo se alcanza | Quién lo origina |
+|---|---|---|
+| `NIVEL_1` | Es el nivel inicial de todo ticket. También es el nivel al que vuelve un ticket estancado en Crítico, marcado como reincidente | El sistema |
+| `NIVEL_2` | Al escalar un ticket que está en Nivel 1, o por asignación manual | El sistema al escalar, o un agente o supervisor |
+| `NIVEL_3` | Al escalar un ticket que está en Nivel 2, o por asignación manual | El sistema al escalar, o un agente o supervisor |
+| `CRITICO` | **Solo por asignación manual.** Ninguna regla automática lleva un ticket a este nivel. Escalar un ticket que ya está en Nivel 3 no lo modifica | Un agente o supervisor |
+
+```mermaid
+stateDiagram-v2
+    [*] --> NIVEL_1 : Se crea el ticket
+    NIVEL_1 --> NIVEL_2 : Escalado
+    NIVEL_2 --> NIVEL_3 : Escalado
+    NIVEL_3 --> NIVEL_3 : Escalado (se mantiene y se reasigna)
+    NIVEL_1 --> CRITICO : Asignación manual
+    NIVEL_2 --> CRITICO : Asignación manual
+    NIVEL_3 --> CRITICO : Asignación manual
+    CRITICO --> NIVEL_1 : Rebote tras 5 días sin actualizaciones
+```
+
+Además de las transiciones del diagrama, un agente o supervisor puede pasar un ticket de cualquier nivel a cualquier otro, incluso a uno inferior.
+
+**Quién puede cambiar el nivel de forma manual**
+
+| Actor | ¿Puede cambiar el nivel? | Respuesta si no puede |
+|---|---|---|
+| Cliente | No | 403 |
+| Agente | Sí | - |
+| Supervisor | Sí | - |
+| Administrador sin rol de agente ni de supervisor | No | 403 |
+| Sistema | Solo el rebote desde Crítico | - |
+
+Condiciones del cambio manual (`PATCH /tickets/{id}/nivel`):
+
+- El ticket debe pertenecer a la empresa de quien lo cambia (si no, 404) y no puede estar cerrado (se responde que el ticket está cerrado y no admite cambios).
+- El motivo es opcional, pero se recomienda indicarlo.
+- Cada cambio queda en el historial con el campo `nivel_atencion`, el valor anterior y el nuevo, quién lo hizo y el motivo.
+- El cliente no ve el nivel de atención en sus pantallas.
+
+**Qué pasa con un ticket en Crítico**
+
+Si un ticket está en `CRITICO`, no está resuelto ni cerrado y pasan más de 5 días sin ninguna actualización, el planificador (que se ejecuta cada hora) lo devuelve a `NIVEL_1`, lo marca como reincidente y registra el cambio sin autor (en el historial figura "Sistema"). "Sin avances" significa que la fecha de última actualización del ticket supera ese plazo.
+
+**Efecto sobre el tiempo objetivo (SLA)**
+
+El vencimiento se calcula como la fecha de creación del ticket más las horas del nivel vigente. Por eso, al pasar un ticket a Crítico (4 horas), si fue creado hace más de 4 horas el tiempo objetivo figura vencido desde ese momento. Al volver a Nivel 1 se recalcula con 24 horas. Esta forma de cálculo es una decisión de la primera versión. Como mejora futura queda contar el tiempo objetivo desde el momento del cambio de nivel.
+
+**Decisión de diseño y mejora futura**
+
+En esta versión no existe una restricción propia para el nivel Crítico: lo puede asignar cualquier agente o supervisor, con motivo opcional. Se priorizó la agilidad de respuesta ante un caso grave y la trazabilidad por el historial. Como mejora futura se plantea que solo los supervisores puedan asignar el nivel Crítico y que el motivo sea obligatorio.
+
+**Preguntas frecuentes**
+
+| Pregunta | Respuesta |
+|---|---|
+| ¿Cómo llega un ticket al nivel Crítico? | Solo porque un agente o un supervisor lo asigna a mano |
+| ¿Puede hacerlo un administrador? | No, salvo que además tenga el rol de agente o de supervisor |
+| ¿Escalar un ticket lo lleva a Crítico? | No. Escalar sube un nivel hasta Nivel 3 y se detiene ahí |
+| ¿Qué evita que un caso quede trabado en Crítico? | El rebote automático a Nivel 1, marcado como reincidente, tras 5 días sin actualizaciones |
+| ¿Queda registro de quién puso un ticket en Crítico? | Sí, en el historial, con la persona, la fecha y el motivo si lo indicó |
 
 ## RN9: El escalado reasigna a un usuario con rol Supervisor
 
@@ -181,6 +247,8 @@ Este documento reúne en un solo lugar todas las reglas de negocio del sistema, 
 **Por qué:** no todo caso se resuelve dentro del software; el sistema debe poder señalar cuándo un caso escapa a su propia lógica y necesita intervención humana o legal.
 
 **Implementado en:** `Ticket.java` (campos `esReclamoFormal`, `responsableExterno`).
+
+**Estado de implementación:** parcial. El modelo de datos y la respuesta de la API incluyen ambos campos (por defecto, no es reclamo formal y sin responsable externo), pero esta versión no ofrece todavía una operación ni una pantalla para completarlos. Queda como mejora futura.
 
 ---
 
