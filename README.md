@@ -59,7 +59,7 @@ Para las organizaciones modernas, la calidad del servicio de soporte define la r
 | Seguimiento de estado | Flujo ampliado pensado para un caso de uso real (ver "Flujo de Estados del Ticket"), con historial de cambios y fecha de cada transición |
 | Comentarios | Usuario y agente pueden agregar comentarios dentro del ticket para dar contexto o pedir información |
 | Adjuntos | El usuario puede adjuntar fotos a un ticket o comentario; los agentes responden únicamente con texto (ver justificación en "Reglas de Negocio") |
-| Panel de agente | Listado filtrable por estado, prioridad, categoría y agente asignado |
+| Panel de agente | Listado filtrable por estado, prioridad, nivel de atención, categoría y agente asignado |
 | Panel de usuario | Vista simplificada con solo los tickets propios y su estado actual |
 | Autenticación | Login por empresa y email con JWT, con cuatro roles (cliente, agente, supervisor, administrador) y rutas protegidas según permisos |
 
@@ -154,7 +154,7 @@ El sistema contempla una **ventana de mantenimiento programada** (horario config
 - **Backend:** Java 21 + Spring Boot + JPA - se eligió por ser el stack con el que el equipo ya tiene experiencia previa (TPIs de Programación 3 y Programación IV), lo que reduce la curva de aprendizaje y permite enfocar el tiempo en el diseño del producto
 - **Frontend:** React + TypeScript - mismo criterio: stack ya trabajado en cursadas anteriores
 - **Base de datos:** PostgreSQL - modelo relacional adecuado dado que las entidades (tickets, usuarios, categorías, comentarios) tienen relaciones bien definidas y consultas que se benefician de integridad referencial
-- **Despliegue:** Backend en Render/Railway, Frontend en Vercel/Netlify - servicios gratuitos con despliegue continuo desde GitHub, cumpliendo el requisito de tener al menos un componente corriendo en la nube
+- **Despliegue:** Backend en Render, Frontend en Vercel y base de datos en Supabase - servicios gratuitos con despliegue continuo desde GitHub, con los tres componentes en línea (ver la sección Aplicación en Línea)
 
 ## Diseño Técnico Previo al Desarrollo
 
@@ -185,7 +185,7 @@ Para la gestión de parámetros por cliente (ej. `configuracion_empresa.modulos_
 
 ### 2. Canales de Entrada por Voz y Auditoría de IA
 
-El canal de entrada por voz (`canal_origen = 'voz'`) combina usabilidad con auditoría técnica:
+El canal de entrada por voz (`canal_origen = 'VOZ'`) combina usabilidad con auditoría técnica:
 
 - **Inmutabilidad y Auditoría:** se almacena tanto el archivo de audio original (`audio_url`) como la `transcripcion_original`, antes de cualquier procesamiento de palabras clave o asignación automática.
 - **Control de Calidad:** permite verificar la fidelidad de la categorización realizada por el sistema de reconocimiento ante eventuales discrepancias.
@@ -212,6 +212,13 @@ Toda la documentación de diseño está en `/docs`:
 - [`pruebas-ticketdesk.md`](./docs/pruebas-ticketdesk.md): casos de prueba ejecutados y sus resultados
 - [`smoke-test.ps1`](./docs/smoke-test.ps1): script de PowerShell que verifica automáticamente el sistema desplegado
 - [`informe-final-ticketdesk.md`](./docs/informe-final-ticketdesk.md): informe final del proyecto
+- [`diccionario-nomenclatura-ticketdesk.md`](./docs/diccionario-nomenclatura-ticketdesk.md): nombres de cada concepto en la base de datos, la API y las pantallas
+- [`casos-de-uso-ticketdesk.md`](./docs/casos-de-uso-ticketdesk.md): 21 casos de uso formales
+- [`criterios-aceptacion-ticketdesk.md`](./docs/criterios-aceptacion-ticketdesk.md): criterios de aceptación de los requerimientos funcionales
+- [`matriz-trazabilidad-ticketdesk.md`](./docs/matriz-trazabilidad-ticketdesk.md): relación entre requerimientos, reglas, casos de uso, endpoints, entidades y pantallas
+- [`diagramas-uml-ticketdesk.md`](./docs/diagramas-uml-ticketdesk.md): diagramas de casos de uso, componentes, actividades, secuencia, despliegue y entidad-relación
+- [`estrategia-pruebas-ticketdesk.md`](./docs/estrategia-pruebas-ticketdesk.md): estrategia de pruebas, validaciones y escenarios de error
+- [`smoke-test-ampliado.ps1`](./docs/smoke-test-ampliado.ps1): script con los casos de validación, permisos y errores
 
 ## Aplicación en Línea
 
