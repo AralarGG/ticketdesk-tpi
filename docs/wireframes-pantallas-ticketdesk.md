@@ -257,3 +257,24 @@ Los wireframes anteriores son el diseño inicial. Al implementar el frontend se 
 7. **Panel de agente (pantalla 6):** además de estado, prioridad y nivel, se puede filtrar por categoría y por "Solo los míos". El contador muestra la cantidad de tickets de la búsqueda.
 8. **Gestión de agentes (pantalla 9):** se implementó como la pestaña **Usuarios** del panel de administración, con las acciones de sumar un rol, activar y desactivar. Si el agente tiene tickets abiertos, el sistema rechaza la baja con un mensaje que indica cuántos son, y la reasignación se hace desde cada ticket. El botón "Reasignar todos y desactivar" queda como mejora futura.
 9. **Panel de administración (pantalla 8):** además de la configuración de módulos y la ventana de mantenimiento, incluye las pestañas **Categorías** (alta de categorías propias de la empresa) y **Usuarios**.
+
+## Decisiones de interfaz y su respaldo en los artefactos funcionales
+
+Para que los documentos funcionales sean la única fuente de verdad, cada decisión de interfaz tomada al implementar las pantallas está respaldada en los requerimientos, las reglas, los casos de uso o los criterios de aceptación. Si una pantalla cambia, el cambio se refleja en estos artefactos antes de darse por cerrado.
+
+| N° | Decisión de interfaz | Dónde está documentada |
+|---|---|---|
+| 1 | El login pide la empresa además del email y la contraseña | RN1, UC-01, UC-02, CA-RF1-03 |
+| 2 | Las fotos se suben desde el detalle del ticket, después de crearlo | UC-03 (paso 5), UC-07, flujo 1, CA-RF2-07 |
+| 3 | La voz se resuelve en una sola pantalla, con transcripción en vivo y categoría sugerida editable | UC-04, RN14, flujo 2, CA-RF2-03 a CA-RF2-06 |
+| 4 | El detalle muestra un recorrido de cinco pasos, la barra de tiempo objetivo y, solo al personal, el historial | RN5, RN8, UC-05, UC-15, CA-RF4-02, CA-RF5-03 |
+| 5 | Los botones de acción muestran solo las transiciones válidas del estado actual | UC-12 (tabla de transiciones), RN5, CA-RF3-04 |
+| 6 | El cliente confirma el cierre o indica que el problema continúa desde el detalle | UC-08, flujo 5, RN5, CA-RF3-08, CA-RF3-09 |
+| 7 | El panel del personal filtra por estado, prioridad, nivel, categoría y "Solo los míos" | UC-09, RNF7 |
+| 8 | La gestión de agentes es la pestaña Usuarios del panel de administración | UC-18, RN3, flujo 7, CA-RF5-05 |
+| 9 | El panel de administración incluye una pestaña de categorías propias | UC-17, RN10, CA-RF4-07 |
+| 10 | El aviso del motivo obligatorio aparece junto a los botones y el cursor pasa al cuadro | UC-13 (flujo alternativo A1), RN9, CA-RF3-06 |
+| 11 | El selector "Asignar a" aparece solo para los supervisores | UC-11, RN9, CA-RF3-02, CA-RF3-03 |
+| 12 | El cliente no ve el nivel de atención ni el tiempo objetivo | RN8, CA-RF4-01 |
+| 13 | El menú oculta las opciones de los módulos deshabilitados | RN16, UC-16, CA-RF6-03 |
+| 14 | Durante la ventana de mantenimiento se rechazan las altas y los cambios con un aviso | RN17, UC-21, CA-RF6-04 |

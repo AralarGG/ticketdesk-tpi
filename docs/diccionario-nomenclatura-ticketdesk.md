@@ -83,6 +83,8 @@ Se usa el término **personal de soporte** para referirse en conjunto a agentes,
 
 Comentarios y adjuntos son dos módulos independientes: una empresa puede permitir comentarios y no fotos.
 
+La API valida en cada operación que estén habilitados los módulos `comentarios`, `adjuntos`, `voz` y `categorias_propias`. El módulo `facturacion` es un ejemplo de módulo opcional: se puede habilitar o deshabilitar, pero en esta versión no agrega funciones propias.
+
 ## 3. Correspondencia por entidad
 
 Cada tabla indica cómo se llama cada dato en la base, en la API y en las pantallas. Una celda con un guion significa que ese dato no viaja por la API o no se muestra.
@@ -189,9 +191,9 @@ El tiempo objetivo (SLA) no se guarda: se calcula al responder, a partir del niv
 | Columna | Campo de la API | Texto en pantalla |
 |---|---|---|
 | `id` | `id` | - |
-| `entidad` | - (en los tickets vale `Ticket`) | - |
+| `entidad` | - (vale `Ticket`, `Usuario` o `ConfiguracionEmpresa`) | - |
 | `entidad_id` | Va en la ruta del ticket | - |
-| `campo_modificado` | `campoModificado` (valores `estado`, `agente_id` y `nivel_atencion`) | Estado, Agente y Nivel de atención |
+| `campo_modificado` | `campoModificado` (en tickets: `estado`, `agente_id` y `nivel_atencion`; en usuarios: `roles` y `activo`; en la configuración: `modulos_habilitados` y `ventana_mantenimiento`) | Estado, Agente y Nivel de atención |
 | `valor_anterior` | `valorAnterior` | Valor anterior |
 | `valor_nuevo` | `valorNuevo` | Valor nuevo |
 | `usuario_id` | `realizadoPor`: nombre de la persona, o "Sistema" si es nulo | Quién lo hizo |
@@ -228,6 +230,7 @@ Algunos pedidos usan un nombre distinto al del dato que modifican. Se documentan
 | Tiempo objetivo (SLA) | Horas objetivo de resolución según el nivel de atención |
 | Ventana de mantenimiento | Franja horaria diaria, definida por empresa, en la que se rechazan las altas y los cambios sobre tickets |
 | Módulo | Parte del sistema que cada empresa puede habilitar o deshabilitar |
+| Ticket abierto | Ticket que no está `CERRADO`. Incluye los resueltos que esperan la confirmación del cliente |
 
 ## 6. Inconsistencias detectadas y decisión tomada
 

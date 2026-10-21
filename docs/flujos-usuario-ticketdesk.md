@@ -4,6 +4,18 @@
 
 Este documento describe paso a paso las principales interacciones de cada tipo de usuario con el sistema, desde que ingresa hasta que completa su objetivo. Sirve como base para el diseño de las pantallas (wireframes) y para validar que el modelo de datos y los endpoints cubren cada paso.
 
+Los nombres de estados, roles y campos siguen el `diccionario-nomenclatura-ticketdesk.md`: los estados se escriben con su valor técnico (por ejemplo `EN_PROGRESO`). Cada flujo corresponde a uno o más casos de uso de `casos-de-uso-ticketdesk.md`:
+
+| Flujo | Casos de uso |
+|---|---|
+| 1. Cliente crea un ticket por formulario | UC-03, UC-07 |
+| 2. Cliente crea un ticket por voz | UC-04 |
+| 3. Agente toma y resuelve un ticket | UC-06, UC-09, UC-10, UC-12 |
+| 4. Ticket se escala a un supervisor | UC-11, UC-13, UC-15 |
+| 5. Cliente reabre un ticket resuelto | UC-08 |
+| 6. Administrador configura módulos para una empresa | UC-16 |
+| 7. Agente se da de baja del sistema | UC-11, UC-18 |
+
 ---
 
 ## 1. Flujo: Cliente crea un ticket por formulario
@@ -13,12 +25,12 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 1. El cliente inicia sesión con su email y contraseña (`POST /auth/login`)
 2. Accede a su panel de usuario y hace clic en "Nuevo ticket"
 3. Completa el formulario: título, descripción, categoría (seleccionada del listado de categorías disponibles para su empresa) y prioridad
-4. Opcionalmente, adjunta una o más fotos como evidencia del problema
-5. Envía el formulario (`POST /tickets`, seguido de `POST /tickets/{id}/adjuntos` si hay fotos)
-6. El sistema crea el ticket en estado `nuevo` y lo confirma en pantalla con un número de referencia
-7. El cliente puede ver su ticket recién creado en su panel, listado junto a los demás
+4. Envía el formulario (`POST /tickets`)
+5. El sistema crea el ticket en estado `NUEVO`, con nivel `NIVEL_1`, y muestra su detalle en pantalla
+6. Si quiere aportar evidencia, desde el detalle del ticket sube una o más fotos (`POST /tickets/{id}/adjuntos`)
+7. El cliente puede ver su ticket en su panel, listado junto a los demás
 
-**Puntos de control:** si falta un campo obligatorio, el sistema no permite avanzar y marca el campo faltante. Si la foto supera el tamaño permitido, se avisa antes de intentar subirla.
+**Puntos de control:** si falta un campo obligatorio, el sistema no permite avanzar y marca el campo faltante. Si el archivo no es una imagen o supera los 10 MB, el sistema lo rechaza con un aviso.
 
 ---
 
@@ -32,7 +44,7 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 4. La aplicación envía la transcripción (`POST /tickets/voz/sugerencia`) y el sistema busca palabras clave para sugerir categoría y título
 5. Se muestra al cliente una pantalla de confirmación con el título y la categoría sugeridos y la transcripción completa, para que confirme o corrija antes de crear el ticket
 6. El cliente confirma y la aplicación envía el audio original, la transcripción y la categoría elegida (`POST /tickets/voz`)
-7. El sistema sube el audio a Cloudinary y crea el ticket en estado `nuevo`, guardando tanto la URL del audio original como la transcripción
+7. El sistema sube el audio a Cloudinary y crea el ticket en estado `NUEVO`, guardando tanto la URL del audio original como la transcripción
 
 **Punto de control clave:** el cliente siempre revisa la transcripción antes de confirmar. Esto evita que un error de reconocimiento de voz genere un ticket mal categorizado sin que nadie lo note.
 
@@ -43,13 +55,13 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 **Actor:** Agente de soporte (`ROLE_AGENT`)
 
 1. El agente inicia sesión y accede a su panel, donde ve el listado de tickets de su empresa
-2. Filtra por estado `nuevo` y prioridad `alta` para priorizar los más urgentes (`GET /tickets?estado=nuevo&prioridad=alta`)
+2. Filtra por estado `NUEVO` y prioridad `alta` para priorizar los más urgentes (`GET /tickets?estado=NUEVO&prioridad=ALTA`)
 3. Abre un ticket para ver el detalle completo (`GET /tickets/{id}`)
-4. Se autoasigna el ticket (`PATCH /tickets/{id}/asignar`), lo que cambia el estado a `asignado`
-5. Comienza a trabajar en la resolución: cambia el estado a `en_progreso` (`PATCH /tickets/{id}/estado`)
-6. Si necesita más información del cliente, agrega un comentario (`POST /tickets/{id}/comentarios`) y cambia el estado a `esperando_cliente`
-7. Cuando el cliente responde (nuevo comentario del lado del cliente), el ticket vuelve automáticamente a `en_progreso` y el agente retoma el caso
-8. Una vez que tiene la solución, agrega un comentario final explicándola y cambia el estado a `resuelto` (`PATCH /tickets/{id}/estado`), quedando a la espera de confirmación del cliente
+4. Se autoasigna el ticket (`PATCH /tickets/{id}/asignar`), lo que cambia el estado a `ASIGNADO`
+5. Comienza a trabajar en la resolución: cambia el estado a `EN_PROGRESO` (`PATCH /tickets/{id}/estado`)
+6. Si necesita más información del cliente, agrega un comentario (`POST /tickets/{id}/comentarios`) y cambia el estado a `ESPERANDO_CLIENTE`
+7. Cuando el cliente responde (nuevo comentario del lado del cliente), el ticket vuelve automáticamente a `EN_PROGRESO` y el agente retoma el caso
+8. Una vez que tiene la solución, agrega un comentario final explicándola y cambia el estado a `RESUELTO` (`PATCH /tickets/{id}/estado`), quedando a la espera de confirmación del cliente
 
 **Restricción aplicada en este flujo:** en el paso 6 y 8, el agente solo puede responder con texto, nunca adjuntando fotos (regla de negocio ya definida en el DER).
 
@@ -60,7 +72,7 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 **Actor:** Agente de soporte → Supervisor (`ROLE_SUPERVISOR`)
 
 1. El agente, trabajando un ticket complejo, determina que no puede resolverlo con su nivel de acceso o conocimiento
-2. Cambia el estado del ticket a `escalado`, indicando un motivo obligatorio (`PATCH /tickets/{id}/estado`)
+2. Cambia el estado del ticket a `ESCALADO`, indicando un motivo obligatorio (`PATCH /tickets/{id}/estado`)
 3. Como parte de ese mismo cambio de estado, el sistema sube un nivel de atención (hasta Nivel 3) y reasigna automáticamente el `agente_id` al supervisor activo con menos tickets abiertos, registrando ambos cambios en el historial
 4. El supervisor ve el ticket en su propio panel, con acceso al historial completo (`historial_cambios`) para entender qué se intentó antes de escalar
 5. El supervisor continúa el flujo normal (comentarios, cambio de estado) hasta resolverlo
@@ -71,12 +83,12 @@ Este documento describe paso a paso las principales interacciones de cada tipo d
 
 **Actor:** Usuario/Cliente (`ROLE_USER`)
 
-1. El cliente recibe la respuesta del agente y su ticket pasa a estado `resuelto`
+1. El cliente recibe la respuesta del agente y su ticket pasa a estado `RESUELTO`
 2. Verifica si el problema realmente se solucionó con esa respuesta
 3. Si el problema persiste, desde el detalle del ticket elige la opción "El problema continúa" (antes de que se cumplan las 72hs de la ventana de confirmación, o el sistema ya lo habrá cerrado automáticamente)
-4. El sistema cambia el estado a `reabierto` (`PATCH /tickets/{id}/estado`, iniciado por el cliente pero validado por backend), y el ticket vuelve a `en_progreso`
-5. El ticket vuelve a aparecer en el panel del agente que lo había resuelto, con todo el historial de comentarios previo intacto
-6. El agente retoma el caso desde donde había quedado
+4. El sistema cambia el estado a `REABIERTO` (`PATCH /tickets/{id}/estado`, iniciado por el cliente y validado por el servidor) y borra la fecha de resolución
+5. El ticket vuelve al panel del personal de soporte, con todo el historial de comentarios previo intacto
+6. Un agente retoma el caso y lo pasa a `EN_PROGRESO`
 
 **Alternativa (sin reapertura):** si el cliente no responde ni reabre dentro de las 72hs, el sistema cierra el ticket automáticamente (silencio = conformidad tácita), sin necesitar ninguna acción del cliente.
 

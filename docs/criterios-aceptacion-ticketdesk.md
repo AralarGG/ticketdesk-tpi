@@ -36,7 +36,7 @@ Nota: la contraseña mínima de 8 caracteres se exige en el alta de usuarios por
 | CA-RF2-02 | un cliente que crea un ticket | omite el título, la descripción, la categoría o la prioridad | el sistema responde 400 y no crea el ticket | Pendiente de prueba |
 | CA-RF2-03 | un cliente con el módulo de voz habilitado | graba un mensaje y termina | se muestra el texto transcripto y se sugieren una categoría y un título. El ticket todavía no se crea | Verificado (B20, F6, D18, M2) |
 | CA-RF2-04 | una sugerencia de voz mostrada | el cliente confirma | se crea un ticket con canal `VOZ`, con el audio original y la transcripción guardados | Verificado (B21, F6, D19, M2) |
-| CA-RF2-05 | un ticket por voz sin palabras clave reconocidas | el cliente termina la grabación | la categoría queda sin elegir y el cliente debe elegirla antes de crear | Verificado (M2) |
+| CA-RF2-05 | una transcripción sin palabras clave reconocidas | el cliente termina la grabación | el sistema sugiere la categoría Consulta por defecto y el cliente puede cambiarla antes de crear | Pendiente de prueba (N16) |
 | CA-RF2-06 | el módulo de voz deshabilitado en la empresa | un cliente entra a la aplicación | la opción de voz no aparece y la API responde 403 si se la invoca | Verificado en parte (F12). Falta probar la respuesta 403 de la API |
 | CA-RF2-07 | un cliente dueño de un ticket no cerrado | sube una imagen | la foto queda asociada al ticket y se muestra como miniatura | Verificado (B17, F5, D17, M3) |
 | CA-RF2-08 | un agente o un supervisor | intenta subir una foto | el sistema responde 403 | Verificado (B16, D16) |
@@ -57,7 +57,7 @@ Nota: la contraseña mínima de 8 caracteres se exige en el alta de usuarios por
 | CA-RF3-09 | un ticket `RESUELTO` | el cliente indica que el problema continúa | el ticket pasa a `REABIERTO`, se borra su fecha de resolución y vuelve al panel del personal | Pendiente de prueba |
 | CA-RF3-10 | un ticket `ESPERANDO_CLIENTE` | el cliente dueño agrega un comentario | el ticket vuelve solo a `EN_PROGRESO` y el cambio queda registrado | Pendiente de prueba |
 | CA-RF3-11 | un ticket `RESUELTO` hace más de 72 horas | se ejecuta la tarea programada | el ticket pasa a `CERRADO` y el historial muestra "Sistema" como autor | Pendiente de prueba (requiere simular el paso del tiempo) |
-| CA-RF3-12 | un ticket en `CRITICO`, sin actualizaciones hace más de 5 días y no resuelto | se ejecuta la tarea programada | el ticket vuelve a `NIVEL_1`, queda marcado como reincidente y el cambio se registra sin autor | Pendiente de prueba (requiere simular el paso del tiempo) |
+| CA-RF3-12 | un ticket en `CRITICO`, sin cambios de estado, agente o nivel hace más de 5 días y no resuelto | se ejecuta la tarea programada | el ticket vuelve a `NIVEL_1`, queda marcado como reincidente y el cambio se registra sin autor | Pendiente de prueba (requiere simular el paso del tiempo) |
 
 ## RF4: Clasificación de tickets
 
@@ -83,7 +83,7 @@ Nota: la contraseña mínima de 8 caracteres se exige en el alta de usuarios por
 | CA-RF5-05 | un agente con tickets abiertos a su cargo | el administrador intenta desactivarlo | el sistema responde 409 e indica cuántos tickets tiene | Verificado (F14) |
 | CA-RF5-06 | un usuario sin tickets abiertos | el administrador lo desactiva | la cuenta queda desactivada, su historial permanece y puede reactivarse | Verificado (F15) |
 
-Alcance de la trazabilidad en esta versión: la categoría y la prioridad se fijan únicamente al crear el ticket y no existe una operación que las modifique, por lo que no generan registros de cambio. Los cambios que sí se registran son los de estado, agente y nivel de atención.
+Alcance de la trazabilidad en esta versión: la categoría y la prioridad se fijan únicamente al crear el ticket y no existe una operación que las modifique, por lo que no generan registros de cambio. Los cambios que sí se registran en los tickets son los de estado, agente y nivel de atención. El sistema registra además, en la misma tabla, los cambios de roles y de activación de los usuarios y los de la configuración de la empresa, aunque la interfaz solo muestra el historial de los tickets.
 
 ## RF6: Multi-empresa
 
@@ -109,9 +109,9 @@ Alcance de la trazabilidad en esta versión: la categoría y la prioridad se fij
 
 | Estado | Cantidad |
 |---|---|
-| Verificado | 29 |
+| Verificado | 28 |
 | Verificado en parte | 4 |
-| Pendiente de prueba | 15 |
+| Pendiente de prueba | 16 |
 | No implementado | 1 |
 | **Total de criterios** | **49** |
 

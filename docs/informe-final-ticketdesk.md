@@ -198,7 +198,7 @@ Se tomaron decisiones de usabilidad específicas: un **recorrido de cinco pasos*
 El cliente toca "Nuevo ticket por voz", acepta el permiso del micrófono y cuenta su problema. El flujo es:
 
 1. El navegador graba el audio y, al mismo tiempo, lo transcribe en vivo con la Web Speech API. La transcripción no requiere ningún servicio externo de pago.
-2. Al terminar, la aplicación envía el texto al backend, que busca palabras clave y devuelve una categoría y un título sugeridos. Por ejemplo, "me cobraron dos veces" sugiere la categoría Facturación.
+2. Al terminar, la aplicación envía el texto al backend, que busca palabras clave y devuelve una categoría y un título sugeridos. Por ejemplo, "me cobraron dos veces" sugiere la categoría Facturación. Si no reconoce ninguna palabra clave, sugiere la categoría Consulta.
 3. El cliente revisa el audio, corrige el texto si hace falta, confirma o cambia la categoría y elige la prioridad.
 4. Al confirmar, la aplicación envía el audio original, la transcripción y la categoría elegida. El backend sube el audio a Cloudinary y crea el ticket.
 
@@ -210,7 +210,7 @@ Cada cambio relevante de un ticket (estado, agente, nivel de atención) genera u
 
 ## 15. Pruebas
 
-Se probó de punta a punta tanto la API (mediante peticiones directas) como la aplicación web (a mano, con los roles de cliente, agente, supervisor y administrador). Una vez desplegado el sistema, se repitió una batería automática de 25 pruebas sobre la dirección pública, con todos los casos aprobados, y se verificaron a mano la creación de tickets por voz, la subida de fotos y la asignación por parte de un supervisor. El detalle de los casos y los resultados está en `docs/pruebas-ticketdesk.md`. Se verificaron, entre otros: el ciclo completo de un ticket, las restricciones por rol (403), el aislamiento entre empresas (404), el rechazo del escalado sin motivo (400), la imposibilidad de que el agente cierre un ticket (409), la subida de fotos y audios a Cloudinary, la creación por voz, la ventana de mantenimiento (503) y la gestión de usuarios.
+Se probó de punta a punta tanto la API (mediante peticiones directas) como la aplicación web (a mano, con los roles de cliente, agente, supervisor y administrador). Una vez desplegado el sistema, se repitió una batería automática de 25 pruebas sobre la dirección pública, con todos los casos aprobados, y se verificaron a mano la creación de tickets por voz, la subida de fotos y la asignación por parte de un supervisor. La estrategia está en `docs/estrategia-pruebas-ticketdesk.md` y el detalle de los casos y los resultados en `docs/pruebas-ticketdesk.md`. Se verificaron, entre otros: el ciclo completo de un ticket, las restricciones por rol (403), el aislamiento entre empresas (404), el rechazo del escalado sin motivo (400), la imposibilidad de que el agente cierre un ticket (409), la subida de fotos y audios a Cloudinary, la creación por voz, la ventana de mantenimiento (503) y la gestión de usuarios.
 
 Durante las pruebas se detectaron y corrigieron defectos de usabilidad, como avisos de error que aparecían lejos del botón que los originaba y textos de ayuda que se prestaban a confusión.
 
@@ -238,6 +238,7 @@ Los planes gratuitos tienen dos limitaciones que conviene conocer: el backend se
 ## 18. Limitaciones y trabajo futuro
 
 - Notificaciones por email o push cuando cambia el estado de un ticket.
+- Operación y pantalla para marcar un reclamo formal y registrar un responsable externo: el modelo de datos ya incluye ambos campos, pero esta versión no permite completarlos.
 - Chat en tiempo real entre cliente y agente.
 - Tableros de métricas: tiempos promedio de resolución, cumplimiento de los tiempos objetivo y comparativas entre empresas.
 - Reasignación masiva de tickets al desactivar a un agente.
@@ -266,3 +267,9 @@ Toda la documentación técnica se encuentra en la carpeta `docs` del repositori
 - `schema.sql`: esquema de la base de datos
 - `despliegue-ticketdesk.md`: guía de despliegue
 - `pruebas-ticketdesk.md`: casos de prueba y resultados
+- `estrategia-pruebas-ticketdesk.md`: estrategia de pruebas, validaciones y escenarios de error
+- `diccionario-nomenclatura-ticketdesk.md`: nomenclatura unificada
+- `casos-de-uso-ticketdesk.md`: casos de uso formales
+- `criterios-aceptacion-ticketdesk.md`: criterios de aceptación
+- `matriz-trazabilidad-ticketdesk.md`: matriz de trazabilidad
+- `diagramas-uml-ticketdesk.md`: diagramas UML

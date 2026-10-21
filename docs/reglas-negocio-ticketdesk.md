@@ -84,7 +84,7 @@ Este documento reúne en un solo lugar todas las reglas de negocio del sistema, 
 
 ### Transiciones del nivel de atención (ampliación de RN8)
 
-Esta sección explica cómo se llega a cada nivel de atención, quién puede cambiarlo y qué ocurre después. Responde en especial a la pregunta sobre el nivel Crítico.
+Esta sección explica cómo se llega a cada nivel de atención, quién puede cambiarlo y qué ocurre después. Aclara en especial cómo se alcanza el nivel Crítico y quién puede asignarlo.
 
 **Cómo se llega a cada nivel**
 
@@ -128,7 +128,7 @@ Condiciones del cambio manual (`PATCH /tickets/{id}/nivel`):
 
 **Qué pasa con un ticket en Crítico**
 
-Si un ticket está en `CRITICO`, no está resuelto ni cerrado y pasan más de 5 días sin ninguna actualización, el planificador (que se ejecuta cada hora) lo devuelve a `NIVEL_1`, lo marca como reincidente y registra el cambio sin autor (en el historial figura "Sistema"). "Sin avances" significa que la fecha de última actualización del ticket supera ese plazo.
+Si un ticket está en `CRITICO`, no está resuelto ni cerrado y pasan más de 5 días sin ninguna actualización, el planificador (que se ejecuta cada hora) lo devuelve a `NIVEL_1`, lo marca como reincidente y registra el cambio sin autor (en el historial figura "Sistema"). "Sin avances" significa que la fecha de última modificación del ticket supera ese plazo. Esa fecha cambia cuando se modifica el estado, el agente o el nivel; agregar un comentario no la modifica. Si se elige el mismo nivel que el actual, no hay cambio y no se registra nada.
 
 **Efecto sobre el tiempo objetivo (SLA)**
 

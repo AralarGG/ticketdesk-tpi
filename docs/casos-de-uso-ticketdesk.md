@@ -28,7 +28,7 @@ Una misma persona puede tener más de un rol (por ejemplo, agente y supervisor).
 | UC-03 | Crear un ticket por formulario | Cliente | RF2, RF4 | RN8, RN10 |
 | UC-04 | Crear un ticket por voz | Cliente | RF2 | RN14 |
 | UC-05 | Consultar mis tickets | Cliente | RF2, RF6 | RN15 |
-| UC-06 | Comentar un ticket | Cliente, agente, supervisor | RF2 | - |
+| UC-06 | Comentar un ticket | Cliente y personal de soporte | RF2 | - |
 | UC-07 | Adjuntar una foto | Cliente | RF2 | RN13 |
 | UC-08 | Confirmar el cierre o reabrir un ticket | Cliente | RF3 | RN5, RN6 |
 | UC-09 | Listar y filtrar los tickets de la empresa | Personal de soporte | RF3 | RN15 |
@@ -64,7 +64,7 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
   5. La aplicación muestra el panel y el menú que corresponden al rol y a los módulos habilitados de la empresa.
 - **Flujos alternativos y errores:**
   - A1. Email, contraseña o empresa incorrectos: el sistema responde 401 "Email, contraseña o empresa incorrectos".
-  - A2. La cuenta está desactivada: el sistema responde 401 "El usuario está desactivado".
+  - A2. La cuenta está desactivada: el sistema responde 401 "El usuario está desactivado". Si la cuenta se desactiva después de iniciar sesión, su token deja de ser válido.
   - A3. Si el token vence, la aplicación vuelve a la pantalla de ingreso.
 - **Postcondiciones:** la persona queda autenticada. No se guarda ninguna sesión en el servidor.
 - **Referencias:** `GET /auth/empresas`, `POST /auth/login`.
@@ -83,6 +83,7 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
   - A1. El email ya existe en esa empresa: 409 "Ya existe un usuario con ese email en la empresa". El mismo email sí puede existir en otra empresa.
   - A2. Falta un dato o el email es inválido: 400.
   - A3. La pantalla exige una contraseña de al menos 8 caracteres.
+  - A4. La empresa no existe o no está activa: 404 "Empresa no encontrada".
 - **Postcondiciones:** existe un nuevo usuario con rol `ROLE_USER`.
 - **Referencias:** `POST /auth/register`.
 
@@ -120,7 +121,7 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
 - **Flujos alternativos y errores:**
   - A1. No se otorga el permiso de micrófono: la aplicación lo informa y no permite grabar.
   - A2. El navegador no transcribe: el cliente escribe el texto a mano.
-  - A3. Ninguna palabra clave coincide: la categoría queda sin elegir y el cliente debe elegirla.
+  - A3. Ninguna palabra clave coincide: el sistema sugiere la categoría Consulta por defecto y el cliente puede cambiarla.
   - A4. El módulo de voz está deshabilitado: la opción no aparece en el menú y la API responde 403.
   - A5. La transcripción está vacía o el archivo no es un audio: 400.
 - **Postcondiciones:** existe un ticket con el audio original y la transcripción para su auditoría.
@@ -143,7 +144,7 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
 
 ### UC-06: Comentar un ticket
 
-- **Actor:** Cliente dueño del ticket, agente o supervisor.
+- **Actor:** Cliente dueño del ticket o personal de soporte (agente, supervisor o administrador).
 - **Objetivo:** agregar información a la conversación del ticket.
 - **Precondiciones:** el ticket es accesible para la persona y no está cerrado; el módulo de comentarios está habilitado.
 - **Flujo principal:**
@@ -235,7 +236,7 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
   3. Asigna el ticket, y si estaba `NUEVO` lo pasa a `ASIGNADO`.
   4. Registra los cambios con el motivo, si lo hubo.
 - **Flujos alternativos y errores:**
-  - A1. Un agente intenta asignar a otra persona: 403 "Un agente solo puede tomar tickets para sí mismo. Reasignar a otra persona requiere rol de supervisor".
+  - A1. Un agente intenta asignar a otra persona: 403 "No tenés permisos para realizar esta acción". Un agente solo puede tomar tickets para sí mismo.
   - A2. La persona elegida no es agente ni supervisor: 400.
   - A3. La persona no existe, está inactiva o es de otra empresa: 404 "Agente no encontrado".
 - **Postcondiciones:** el ticket queda a cargo de la persona elegida.
@@ -301,6 +302,7 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
 - **Flujos alternativos y errores:**
   - A1. Un cliente intenta cambiarlo: 403.
   - A2. El ticket está cerrado: 409.
+  - A3. Si el nivel elegido es el mismo que el actual, no se produce ningún cambio ni se registra nada.
 - **Postcondiciones:** el ticket tiene el nuevo nivel.
 - **Referencias:** `PATCH /tickets/{id}/nivel`. Las transiciones y las reglas del nivel Crítico están en `reglas-negocio-ticketdesk.md`, sección "Transiciones del nivel de atención".
 
@@ -332,7 +334,7 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
 - **Flujos alternativos y errores:**
   - A1. Un módulo que no existe: 400 con la lista de módulos válidos.
   - A2. La ventana tiene solo una de las dos horas, o ambas son iguales: 400.
-  - A3. Consulta o modifica la configuración de otra empresa: 403 "No podés acceder a la configuración de otra empresa".
+  - A3. Consulta o modifica la configuración de otra empresa: 403 "No tenés permisos para realizar esta acción".
 - **Postcondiciones:** la configuración de la empresa queda actualizada.
 - **Referencias:** `GET /empresas/{id}/configuracion`, `PATCH /empresas/{id}/configuracion`.
 
@@ -367,7 +369,7 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
   - A3. Intenta desactivar su propia cuenta: 400 "No podés desactivar tu propia cuenta".
   - A4. Intenta desactivar a un agente con tickets abiertos: 409 "El agente tiene N ticket(s) abierto(s) a su cargo. Reasignalos antes de desactivarlo".
   - A5. La cuenta ya estaba en ese estado: 409.
-- **Postcondiciones:** los usuarios reflejan los cambios. El historial de tickets de una persona desactivada permanece intacto.
+- **Postcondiciones:** los usuarios reflejan los cambios. El historial de tickets de una persona desactivada permanece intacto. Los cambios de roles y de activación quedan registrados en el historial.
 - **Referencias:** `GET /usuarios`, `POST /usuarios`, `POST /usuarios/{id}/roles`, `PATCH /usuarios/{id}/desactivar`, `PATCH /usuarios/{id}/activar`.
 
 ### UC-19: Cerrar automáticamente un ticket resuelto
@@ -386,7 +388,7 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
 
 - **Actor:** Sistema.
 - **Disparador:** la misma tarea programada de cada hora.
-- **Condición:** el ticket está en `CRITICO`, no está resuelto ni cerrado y pasaron más de 5 días sin actualizaciones.
+- **Condición:** el ticket está en `CRITICO`, no está resuelto ni cerrado y pasaron más de 5 días sin modificaciones. Cuentan como modificación los cambios de estado, de agente o de nivel; agregar un comentario no la reinicia.
 - **Flujo principal:**
   1. El sistema busca los tickets que cumplen la condición.
   2. Los pasa a `NIVEL_1` y los marca como reincidentes.
@@ -397,11 +399,11 @@ Todos los casos que actúan sobre un ticket, salvo los del sistema, tienen como 
 ### UC-21: Aplicar la ventana de mantenimiento
 
 - **Actor:** Sistema.
-- **Disparador:** cada petición de escritura sobre las rutas de tickets (`POST`, `PUT`, `PATCH` y `DELETE` bajo `/api/v1/tickets`).
+- **Disparador:** cada petición de escritura sobre las rutas de tickets (`POST`, `PUT`, `PATCH` y `DELETE` bajo `/api/v1/tickets`), lo que incluye crear tickets, comentar, subir fotos, crear tickets por voz y cambiar el estado, el agente o el nivel. La regla se aplica a las personas con sesión iniciada.
 - **Condición:** la hora actual, en la zona horaria de Argentina, está dentro de la ventana configurada por la empresa del usuario. La ventana puede cruzar la medianoche.
 - **Flujo principal:**
   1. El sistema detecta que la empresa está en mantenimiento.
-  2. Rechaza la petición con 503 y un aviso de indisponibilidad temporal.
+  2. Rechaza la petición con 503 y el mensaje "El sistema está en mantenimiento y no procesa altas ni cambios en este horario. Intentá nuevamente al finalizar la ventana de mantenimiento".
 - **Flujos alternativos:**
   - A1. Las consultas (`GET`) siguen funcionando.
   - A2. Los cambios de configuración, de categorías y de usuarios no se bloquean.

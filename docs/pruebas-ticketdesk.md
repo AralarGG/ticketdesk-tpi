@@ -2,7 +2,7 @@
 
 ## Documento base: Trabajo Final Integrador UTN TUPaD
 
-Este documento registra las pruebas ejecutadas sobre el sistema y sus resultados. Las pruebas de la API se realizaron enviando peticiones HTTP directas a un servidor local, y las de la aplicación web se hicieron a mano en el navegador Chrome contra ese mismo servidor, con una empresa de prueba y usuarios de los distintos roles.
+Este documento registra las pruebas ejecutadas sobre el sistema y sus resultados. Las pruebas de la API se realizaron enviando peticiones HTTP directas a un servidor local, y las de la aplicación web se hicieron a mano en el navegador Chrome contra ese mismo servidor, con una empresa de prueba y usuarios de los distintos roles. La estrategia general está en `estrategia-pruebas-ticketdesk.md`.
 
 **Fecha de ejecución:** 6 de octubre de 2026
 **Entorno:** backend en ejecución local con PostgreSQL, frontend en modo de desarrollo, almacenamiento real de archivos en Cloudinary.
@@ -115,7 +115,7 @@ La fila D1 agrupa los cuatro inicios de sesión (uno por rol) y cada una de las 
 | M3 | Cliente | Subir una foto a un ticket | Aparece en la sección Fotos | Aprobado |
 | M4 | Supervisor | Asignar un ticket a un agente desde el selector | Estado asignado, agente actualizado y dos registros nuevos en el historial | Aprobado |
 | M5 | Cliente y personal | Verificar la hora de los tickets | Coincide con la hora de Argentina | Aprobado |
-| M6 | Administrador | Recorrer las pestañas de configuración, categorías y usuarios | Las tres pestañas cargan sus datos | [COMPLETAR] |
+| M6 | Administrador | Recorrer las pestañas de configuración, categorías y usuarios | Las tres pestañas cargan sus datos | Aprobado |
 
 ### 4.3 Observaciones del despliegue
 
@@ -125,3 +125,26 @@ La fila D1 agrupa los cuatro inicios de sesión (uno por rol) y cada una de las 
 ## 5. Alcance de las pruebas
 
 Las pruebas fueron manuales y funcionales. No se desarrollaron pruebas automatizadas del código, lo que se registra como una mejora futura: el script de verificación recorre el sistema desde afuera, pero no reemplaza a las pruebas unitarias. No se probó en tiempo real el cierre automático a las 72 horas: el planificador se ejecuta al iniciar el servidor y luego cada hora.
+
+## 6. Casos ampliados
+
+Estos casos cubren los criterios de aceptación que todavía no tenían una prueba. Están definidos en `estrategia-pruebas-ticketdesk.md`. Los casos N01 a N13 y N16 los ejecuta `smoke-test-ampliado.ps1` y los casos N14 y N15 se hacen a mano. Los resultados se completan al ejecutarlos.
+
+| Caso | Criterio | Descripción | Resultado |
+|---|---|---|---|
+| N01 | CA-RF1-02 | El administrador crea un usuario agente y esa persona inicia sesión | [COMPLETAR] |
+| N02 | CA-RF1-03 | El segundo registro con el mismo email en la misma empresa da 409 | [COMPLETAR] |
+| N03 | CA-RF1-06 | Una cuenta desactivada no puede iniciar sesión (401) | [COMPLETAR] |
+| N04 | CA-RF2-02 | Crear un ticket sin título da 400 | [COMPLETAR] |
+| N05 | CA-RF2-09 | Un archivo que no es imagen da 400 y uno de 11 MB da 413 | [COMPLETAR] |
+| N06 | CA-RF3-03 | Un agente no puede asignar un ticket a otra persona (403) | [COMPLETAR] |
+| N07 | CA-RF3-09 | El cliente reabre un ticket resuelto | [COMPLETAR] |
+| N08 | CA-RF3-10 | La respuesta del cliente devuelve el ticket a en progreso | [COMPLETAR] |
+| N09 | CA-RF4-04 | Un agente cambia el nivel de atención | [COMPLETAR] |
+| N10 | CA-RF4-08 | Una categoría con nombre repetido da 409 | [COMPLETAR] |
+| N11 | CA-RF6-05 | Una ventana con la misma hora de inicio y fin da 400 | [COMPLETAR] |
+| N12 | CA-RF6-06 | La configuración de otra empresa da 403 | [COMPLETAR] |
+| N13 | CA-RF2-06, CA-RF6-03 | Con el módulo de voz deshabilitado, la API da 403 | [COMPLETAR] |
+| N14 | CA-RF3-11, CA-RF5-02 | Cierre automático a las 72 horas, con autor "Sistema" | [COMPLETAR] |
+| N15 | CA-RF3-12, CA-RF5-02 | Rebote a Nivel 1 desde Crítico, con autor "Sistema" | [COMPLETAR] |
+| N16 | CA-RF2-05 | Sin palabras clave, la sugerencia de voz propone la categoría Consulta | [COMPLETAR] |

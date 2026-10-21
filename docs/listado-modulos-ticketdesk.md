@@ -92,7 +92,7 @@ Este documento define los módulos funcionales de TicketDesk y los requerimiento
 
 **Entidades relacionadas:** `Ticket` (campos `canal_origen`, `audio_url`, `transcripcion_original`)
 
-**Estado:** backend implementado (Etapa 8 del plan de desarrollo): sugerencia de categoría por palabras clave y alta de ticket con audio y transcripción. La captura y transcripción del audio en el navegador se resuelve en el frontend.
+**Estado:** implementado y probado de punta a punta (Etapa 8 del plan de desarrollo): sugerencia de categoría por palabras clave y alta de ticket con audio y transcripción. La captura y la transcripción del audio las realiza el navegador del cliente, y funcionan en la aplicación desplegada.
 
 ---
 
@@ -137,7 +137,7 @@ Este documento define los módulos funcionales de TicketDesk y los requerimiento
 | Comunicación | Implementado |
 | Categorías | Implementado (modelo híbrido) |
 | Configuración por Empresa | Implementado (módulos y ventana de mantenimiento) |
-| Voz | Backend implementado; captura de audio en el frontend |
+| Voz | Implementado y probado de punta a punta (grabación y transcripción en el navegador) |
 
 ---
 
@@ -168,7 +168,7 @@ Este documento define los módulos funcionales de TicketDesk y los requerimiento
 - El sistema debe permitir categorizar un ticket con una categoría genérica del sistema o una propia de la empresa.
 
 **RF5: Trazabilidad**
-- El sistema debe registrar cada cambio relevante de un ticket (estado, agente asignado, categoría, prioridad, nivel de atención), incluyendo quién lo hizo (o que fue automático), cuándo, y por qué.
+- El sistema debe registrar cada cambio relevante de un ticket (estado, agente asignado y nivel de atención; la categoría y la prioridad se definen al crear el ticket y no se modifican en esta versión), incluyendo quién lo hizo (o que fue automático), cuándo, y por qué.
 - El sistema no debe eliminar físicamente usuarios ni tickets: los usuarios se desactivan, preservando el historial.
 
 **RF6: Multi-empresa (multi-tenant)**
@@ -177,8 +177,8 @@ Este documento define los módulos funcionales de TicketDesk y los requerimiento
 - El sistema debe permitir que cada empresa configure su propia ventana de mantenimiento.
 
 **RF7: Casos fuera del alcance del software**
-- El sistema debe permitir marcar un ticket como reclamo formal, sujeto a normativa de protección al consumidor.
-- El sistema debe permitir registrar los datos de contacto de un responsable externo al software, para casos que requieren intervención humana directa.
+- El sistema debe permitir marcar un ticket como reclamo formal, sujeto a normativa de protección al consumidor. Implementado en parte: el modelo y la respuesta de la API incluyen el dato, pero esta versión no ofrece una operación ni una pantalla para completarlo.
+- El sistema debe permitir registrar los datos de contacto de un responsable externo al software, para casos que requieren intervención humana directa. Implementado en parte, en las mismas condiciones que el punto anterior.
 
 ## Requerimientos No Funcionales
 
