@@ -45,7 +45,7 @@ Para las organizaciones modernas, la calidad del servicio de soporte define la r
 ## Alcance del MVP
 
 **Roles de usuario:**
-- **Usuario/Cliente:** crea tickets, visualiza el estado de sus propios tickets y puede agregar comentarios o información adicional
+- **Cliente:** crea tickets, visualiza el estado de sus propios tickets y puede agregar comentarios o información adicional
 - **Agente de soporte:** visualiza todos los tickets, puede tomarlos, reasignarlos, cambiar su estado y responder al usuario
 - **Supervisor:** recibe los tickets escalados por los agentes y puede asignar tickets a otras personas del equipo
 - **Administrador:** gestiona la configuración de su empresa (módulos habilitados y ventana de mantenimiento), las categorías propias y los usuarios, con sus roles
@@ -54,11 +54,11 @@ Para las organizaciones modernas, la calidad del servicio de soporte define la r
 
 | Funcionalidad | Descripción |
 |---|---|
-| Alta de ticket | El usuario completa título, descripción, categoría (ej. bug, consulta, facturación) y prioridad (baja/media/alta). También puede crearse por voz (ver sección "Apertura de Tickets por Voz") |
+| Alta de ticket | El cliente completa título, descripción, categoría (ej. bug, consulta, facturación) y prioridad (baja/media/alta). También puede crearse por voz (ver sección "Apertura de Tickets por Voz") |
 | Asignación | Un agente toma el ticket manualmente y un supervisor puede asignarlo a otra persona. Al escalar, el sistema lo reasigna automáticamente a un supervisor |
 | Seguimiento de estado | Flujo ampliado pensado para un caso de uso real (ver "Flujo de Estados del Ticket"), con historial de cambios y fecha de cada transición |
-| Comentarios | Usuario y agente pueden agregar comentarios dentro del ticket para dar contexto o pedir información |
-| Adjuntos | El usuario puede adjuntar fotos a un ticket o comentario; los agentes responden únicamente con texto (ver justificación en "Reglas de Negocio") |
+| Comentarios | El cliente y el personal de soporte pueden agregar comentarios dentro del ticket para dar contexto o pedir información |
+| Adjuntos | El cliente puede adjuntar fotos a un ticket o comentario; los agentes responden únicamente con texto (ver justificación en "Reglas de Negocio") |
 | Panel de agente | Listado filtrable por estado, prioridad, nivel de atención, categoría y agente asignado |
 | Panel de usuario | Vista simplificada con solo los tickets propios y su estado actual |
 | Autenticación | Login por empresa y email con JWT, con cuatro roles (cliente, agente, supervisor, administrador) y rutas protegidas según permisos |
@@ -79,7 +79,7 @@ El diseño de la interfaz prioriza la claridad operativa, reduciendo la carga co
 
 ### 1. Panel de Creación de Ticket (Vista Cliente - Web y Voz)
 
-```
+```mermaid
 graph TD
     subgraph Dashboard_Cliente ["🖥️ Portal del Cliente"]
         A["[ Formulario de Ticket ]"] --> B["Campo: Título y Categoría"]
@@ -97,7 +97,7 @@ graph TD
 
 ### 2. Flujo de Gestión y Cambios de Estado (Vista Agente / Supervisor)
 
-```
+```mermaid
 stateDiagram-v2
     [*] --> Nuevo : Cliente crea ticket (Form/Voz)
     Nuevo --> Asignado : Agente toma el ticket
@@ -109,7 +109,7 @@ stateDiagram-v2
     En_Progreso --> Resuelto : Solución confirmada por Agente
     Resuelto --> Cerrado : Confirmación de cierre por el cliente (o vencimiento del plazo)
     Resuelto --> Reabierto : Cliente indica que la solución no funcionó
-    Reabierto --> En_Progreso : Reasignación
+    Reabierto --> En_Progreso : Un agente lo retoma
 ```
 
 ## Flujo de Estados del Ticket (Workflow)
@@ -130,10 +130,10 @@ nuevo → asignado → en progreso → esperando al cliente → resuelto → cer
 - **Esperando al cliente:** el agente necesita información adicional del usuario para continuar
 - **Escalado:** el ticket requiere intervención de un agente con rol `ROLE_SUPERVISOR`
 - **Resuelto:** el agente marcó el problema como solucionado. Queda a la espera de confirmación del cliente: si no responde dentro de 72hs, el sistema lo cierra automáticamente (silencio = conformidad tácita); si el cliente confirma o reabre antes, se resuelve según corresponda
-- **Reabierto:** el cliente indica que el problema persiste tras haber sido marcado como resuelto. Vuelve a `en progreso`, sin perder el historial de comentarios previo
+- **Reabierto:** el cliente indica que el problema persiste tras haber sido marcado como resuelto. Un agente lo retoma y vuelve a `en progreso`, sin perder el historial de comentarios previo
 - **Cerrado:** estado final del ticket, una vez confirmada (explícita o tácitamente) la resolución
 
-Cada transición (incluyendo reasignación de agente, cambio de categoría o prioridad, no solo el estado) queda registrada en `historial_cambios` con fecha, responsable y motivo cuando aplica.
+Cada transición (estado, agente asignado y nivel de atención) queda registrada en `historial_cambios` con fecha, responsable y motivo cuando aplica.
 
 ## Apertura de Tickets por Voz (Voice Speaker)
 
