@@ -2,12 +2,8 @@
 
 ## Trabajo Final Integrador - UTN TUPaD
 
-**Integrantes:**
+**Integrante:**
 - Santiago Raúl Salinas
-- Ezequiel Sanabria
-- Joaquín Del Valle Lietti
-
-**Nota:** el desarrollo del sistema (backend, frontend, base de datos y documentación) estuvo a cargo de Santiago Raúl Salinas.
 
 **Tutor/a:** Gerardo Adrian Herrera
 
@@ -73,7 +69,7 @@ Estas exclusiones no se descartan a futuro, pero quedan fuera del MVP para poder
 
 ---
 
-## 🎨 Wireframes y Prototipos de Interfaz (Mockups)
+## Wireframes y Prototipos de Interfaz (Mockups)
 
 El diseño de la interfaz prioriza la claridad operativa, reduciendo la carga cognitiva tanto para el cliente como para el agente de soporte.
 
@@ -81,12 +77,12 @@ El diseño de la interfaz prioriza la claridad operativa, reduciendo la carga co
 
 ```mermaid
 graph TD
-    subgraph Dashboard_Cliente ["🖥️ Portal del Cliente"]
+    subgraph Dashboard_Cliente ["Portal del Cliente"]
         A["[ Formulario de Ticket ]"] --> B["Campo: Título y Categoría"]
         B --> C["Campo: Descripción"]
         C --> D["Botón: Adjuntar Captura (Solo Clientes)"]
 
-        A --> E["🎙️ Módulo de Voz"]
+        A --> E["Módulo de Voz"]
         E --> F["[ Botón: Grabar Audio ]"]
         F --> G["Visualización: Transcripción Automática previa al envío"]
 
@@ -117,7 +113,7 @@ stateDiagram-v2
 El ciclo de vida de un ticket contempla los estados necesarios para reflejar un caso de uso real: creación, asignación, trabajo activo, posible espera de información, posible escalado, resolución con confirmación del cliente, y cierre.
 
 ```
-nuevo → asignado → en progreso → esperando al cliente → resuelto → cerrado
+nuevo > asignado > en progreso > esperando al cliente > resuelto > cerrado
                         ↓
                     escalado
                         ↓
@@ -285,16 +281,16 @@ Empresa "Empresa Demo", contraseña `Demo1234!` para todos:
 ## Estructura del Repositorio
 
 ```
-/backend    → API REST en Spring Boot (controllers, services, repositories, entidades JPA)
-/frontend   → Aplicación React + TypeScript (vistas, componentes, consumo de API)
-/docs       → Informes, esquemas de base de datos y documentación de avances
+/backend    > API REST en Spring Boot (controllers, services, repositories, entidades JPA)
+/frontend   > Aplicación React + TypeScript (vistas, componentes, consumo de API)
+/docs       > Informes, esquemas de base de datos y documentación de avances
 ```
 
 Todo el desarrollo se centraliza en este único repositorio, según lo requerido por la cátedra.
 
 ## Estado del Proyecto
 
-🟢 Backend y frontend completos, probados de punta a punta y desplegados en la nube; pendientes el informe final y el video. Entrega 3: Arquitectura, Módulos y Reglas de Negocio (correcciones del tutor incorporadas: email único por empresa, categorías híbridas, multi-rol de usuario, historial de cambios generalizado, SLA con nivel Crítico)
+Backend y frontend completos, probados de punta a punta y desplegados en la nube; pendientes el informe final y el video. Entrega 3: Arquitectura, Módulos y Reglas de Negocio (correcciones del tutor incorporadas: email único por empresa, categorías híbridas, multi-rol de usuario, historial de cambios generalizado, SLA con nivel Crítico)
 
 ## Roadmap
 
