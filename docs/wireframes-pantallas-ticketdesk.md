@@ -77,7 +77,7 @@ Paso 1: Grabación
 | < Volver          Crear Ticket por Voz             |
 +--------------------------------------------------+
 |                                                    |
-|              (  🎤  Grabar mensaje  )              |
+|              (    Grabar mensaje    )              |
 |                                                    |
 |         Contanos qué problema tenés               |
 +--------------------------------------------------+
