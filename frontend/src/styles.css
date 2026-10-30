@@ -269,3 +269,37 @@ legend { font-weight: 600; font-size: 0.9rem; padding: 0 0.4rem; }
 @media (prefers-reduced-motion: reduce) {
   .latido { animation: none; }
 }
+
+/* Identidad visual por rol: cada rol tiene su color y su banda con icono */
+.app[data-rol="ROLE_AGENT"] {
+  --marca: #1f7a4f;
+  --marca-oscuro: #165a3a;
+  --marca-fondo: #dcefe3;
+}
+.app[data-rol="ROLE_SUPERVISOR"] {
+  --marca: #5b3e96;
+  --marca-oscuro: #43307a;
+  --marca-fondo: #e9e2f4;
+}
+.app[data-rol="ROLE_ADMIN"] {
+  --marca: #b45309;
+  --marca-oscuro: #8a3f06;
+  --marca-fondo: #fbead6;
+}
+
+.rol-banda {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: -0.25rem -0.25rem 0.25rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 8px;
+  background: var(--marca);
+  color: #fff;
+}
+.rol-banda svg { flex-shrink: 0; }
+.rol-banda-texto { display: flex; flex-direction: column; line-height: 1.15; }
+.rol-banda-texto small { font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(255, 255, 255, 0.9); }
+.rol-banda-texto strong { font-size: 1.05rem; font-weight: 600; color: #fff; }
+
+.app .contenido { border-top: 4px solid var(--marca); }
